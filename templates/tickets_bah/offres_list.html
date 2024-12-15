@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des Offres</title>
+</head>
+<body>
+    <h1>Offres Disponibles</h1>
+    <ul>
+        {% for offre in offres %}
+            <li>{{ offre.nom }} - {{ offre.prix }} EUR</li>
+        {% endfor %}
+    </ul>
+    <a href="/">Retour à l'accueil</a>
+</body>
+</html>
