@@ -1,5 +1,5 @@
 from unicodedata import decimal
-
+from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 
 class Utilisateur(models.Model):
@@ -30,4 +30,19 @@ class Reservation(models.Model):
 
      def __str__(self):
          return f'{self.utilisateur} {self.offre}'
+#configuration de l'authentification
+
+class UtilisateurProfile(models.Model):
+    nom = models.CharField(max_length=50)
+    prenom = models.CharField(max_length=50)
+    email = models.EmailField(unique=True)
+    cle_utilisateur = models.CharField(max_length=255,unique=True)
+
+    def set_password(self, raw_password):
+        self.mot_de_passe = make_password(raw_password, self.mot_de_passe)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.mot_de_passe)
+    def __str__(self):
+        return f'{self.nom} {self.prenom}'
 

@@ -1,11 +1,16 @@
 
-
 from django.urls import path
 from . import views
+
+#AJOUTER LES ROUTES DANS L'APPLICATION POUR ACCEDER AUX:
+# (OFFRE, RESERVATION , ENREGISTER UNE FORMULAIRE ,SE CONNCTER ET SE DECONNECTER)
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('offres/', views.offres_list, name='offres_list'),
-    path('reservations/', views.reservation_create, name='reservations_create'),
+    path('reservation/', views.reservation_create, name = 'reservation_create'),
+    path('register/', views.register, name = 'register'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name = 'logout'),
 
 ]
