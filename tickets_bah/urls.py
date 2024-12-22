@@ -1,6 +1,7 @@
 
 from django.urls import path
 from . import views
+from .views import ajouter_au_panier
 
 #AJOUTER LES ROUTES DANS L'APPLICATION POUR ACCEDER AUX:
 # (OFFRE, RESERVATION , ENREGISTER UNE FORMULAIRE ,SE CONNCTER ET SE DECONNECTER)
@@ -12,5 +13,6 @@ urlpatterns = [
     path('register/', views.register, name = 'register'),
     path('login/', views.login, name='login'),
     path('logout/', views.logout, name = 'logout'),
-
+    path('ajouter_au_panier/ <int:offre_id>/', views.ajouter_au_panier, name = 'ajouter_au_panier'),
+    path('panier/', views.panier, name = 'panier'),
 ]

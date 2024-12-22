@@ -1,0 +1,38 @@
+ {% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation</title>
+    <link rel="stylesheet" href="{% static 'tickets/style.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Jeux Olympiques 2024</a>
+            <a href="/" class="btn btn-outline-light">Accueil</a>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Formulaire de Réservation</h1>
+        <form method="POST" class="mx-auto" style="max-width: 500px;">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="utilisateur_id" class="form-label">ID Utilisateur</label>
+                <input type="text" class="form-control" id="utilisateur_id" name="utilisateur_id" required>
+            </div>
+            <div class="mb-3">
+                <label for="offre_id" class="form-label">ID Offre</label>
+                <input type="text" class="form-control" id="offre_id" name="offre_id" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Valider la Réservation</button>
+        </form>
+    </div>
+    <footer class="bg-dark text-light py-3 mt-5 text-center">
+        <p class="mb-0">&copy; 2024 Jeux Olympiques | Tous droits réservés</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

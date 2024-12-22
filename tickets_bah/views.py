@@ -1,9 +1,14 @@
+from io import BytesIO
 from math import frexp
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import Utilisateur, Offre, Reservation
-from .forms import ResisterForm, LoginForm
+from .models import Utilisateur, Offre, Reservation, Panier
+from .forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login, logout
+import qrcode
+from django.core.files.base import ContentFile
+from django.contrib.auth.hashers import check_password
+
 # Create your views here.(vue pour la page d'acceuil)
 
 def home(request):
@@ -43,17 +48,17 @@ def reservation_create(request):
 
 #1 INSCRIPTION
 def register(request):
-    if request.method == 'POST':
-        form = ResisterForm(request.POST)
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.cle_utilisateur = "cle_utilisateur" + user.email # exemple de cle
-            user.save()
-            return redirect('login')
+            user = form.save(commit=False)  # Ne sauvegarde pas encore dans la base
+            user.set_password(form.cleaned_data['password'])  # Hash le mot de passe
+            user.save()  # Sauvegarde dans la base de données
+            return redirect('login')  # Redirige vers la page de connexion
     else:
-        form = ResisterForm()
+        form = RegisterForm()
     return render(request, 'tickets_bah/register.html', {'form': form})
+
 
 #2 CONNEXION
 def login(request):
@@ -78,4 +83,50 @@ def login(request):
 def logout(request):
     logout(request)
     return redirect('login')
+
+#GENERATION DE QR CODE AVEC LES BILLETS
+def generate_qr_code(reservation):
+    qr_dara = f"{reservation.utilisateur.cle_utilisateur} - {reservation.cle_billet}"
+    qr = qrcode.make(qr_dara)
+    buffer = BytesIO()
+    qr.save(buffer, format='PNG')
+    return ContentFile(buffer.getvalue(), name=f"qrcode_{reservation.id}.png")
+
+#CREER LA RESERVATION
+def reservation_create(request):
+    if request.method == 'POST':
+        utilisateur = Utilisateur.objects.get(id=request.POST['utilisateur_id'])
+        offre = Offre.objects.get(id=request.POST['offre_id'])
+
+        #CREER LA RESA
+        reservation = Reservation.objects.create(utilisateur=utilisateur, offre=offre, cle_billet="unique_key_123",)
+
+        #GENERER ET  ASSOCIER LE QRCODE
+        reservation.qr_code.save(f'qrcode_{reservation.id}.png', generate_qr_code(reservation))
+        reservation.save()
+        return HttpResponse("Reservation creer avec succes")
+    return render(request, "tickets_bah/Reservation_form.html")
+
+#vue pour ajouter une offre dans le panier
+def ajouter_au_panier(request, offre_id):
+    if 'user_id' not in request.session:  #verifier si l'utilisateur est connecter
+        return redirect('login')
+    utilisateur = get_object_or_404(Utilisateur, id=request.session['user_id'])
+    offre = get_object_or_404(Offre, id=offre_id)
+
+    #ajouter l'offre au panier
+    Panier.objects.create(utilisateur=utilisateur, offre=offre)
+    return redirect('panier') # redirige vers la page du panier
+
+#VUE POUR AFFICHER LAE PANIER
+def panier(request):
+    if 'user_id' not in request.session: return redirect('login')
+    utilisateur = get_object_or_404(Utilisateur, id=request.session['user_id'])
+    panier_items = Panier.objects.filter(utilisateur=utilisateur)
+
+    return render(request, 'tickets_bah/panier.html', {})
+
+
+
+
 

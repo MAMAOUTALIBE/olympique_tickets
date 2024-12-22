@@ -4,7 +4,7 @@ from django import forms
 from .models import Utilisateur
 
 
-class ResisterForm(forms.ModelForm): # enregistrement de formulaire
+class RegisterForm(forms.ModelForm): # enregistrement de formulaire
     password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
