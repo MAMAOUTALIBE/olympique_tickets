@@ -73,6 +73,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 
+# Paramètres pour l'envoi d'e-mails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'bahm2062@gmail.com'  # Remplacez par votre email
+EMAIL_HOST_PASSWORD = 'BAHmamadou2008@'  # Remplacez par votre mot de passe ou App Password
+DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
+
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -129,3 +139,5 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGIN_REDIRECT_URL = '/'  # Par exemple, la page d'accueil
+

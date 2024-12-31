@@ -8,6 +8,10 @@ from django.contrib.auth import authenticate, login, logout
 import qrcode
 from django.core.files.base import ContentFile
 from django.contrib.auth.hashers import check_password
+from django.core.mail import send_mail
+from django.conf import settings
+import uuid
+from .utils import envoyer_confirmation_reservation  # Import depuis utils.py
 
 # Create your views here.(vue pour la page d'acceuil)
 
@@ -95,17 +99,33 @@ def generate_qr_code(reservation):
 #CREER LA RESERVATION
 def reservation_create(request):
     if request.method == 'POST':
-        utilisateur = Utilisateur.objects.get(id=request.POST['utilisateur_id'])
-        offre = Offre.objects.get(id=request.POST['offre_id'])
+        if 'user_id' not in request.session:  # Vérifie si l'utilisateur est connecté
+            return redirect('login')
 
-        #CREER LA RESA
-        reservation = Reservation.objects.create(utilisateur=utilisateur, offre=offre, cle_billet="unique_key_123",)
+        utilisateur = get_object_or_404(Utilisateur, id=request.session['user_id'])
+        offre = get_object_or_404(Offre, id=request.POST.get('offre_id'))
 
-        #GENERER ET  ASSOCIER LE QRCODE
-        reservation.qr_code.save(f'qrcode_{reservation.id}.png', generate_qr_code(reservation))
+        # Créer une clé unique pour la réservation
+        cle_billet = str(uuid.uuid4())[:12]
+
+        # Créer la réservation
+        reservation = Reservation.objects.create(
+            utilisateur=utilisateur,
+            offre=offre,
+            cle_billet=cle_billet
+        )
+
+        # Générer et sauvegarder le QR code
+        reservation.generate_qr_code()
         reservation.save()
-        return HttpResponse("Reservation creer avec succes")
-    return render(request, "tickets_bah/Reservation_form.html")
+
+        # Envoyer l'e-mail de confirmation
+        envoyer_confirmation_reservation(utilisateur, reservation)
+
+        return render(request, 'tickets_bah/e_billet.html', {'reservation': reservation})
+
+    return render(request, 'tickets_bah/reservation_form.html')
+
 
 #vue pour ajouter une offre dans le panier
 def ajouter_au_panier(request, offre_id):
@@ -125,6 +145,8 @@ def panier(request):
     panier_items = Panier.objects.filter(utilisateur=utilisateur)
 
     return render(request, 'tickets_bah/panier.html', {})
+
+# UNE FONCTION POUE ENVOYER EMEIL DE CONFIRMATION
 
 
 

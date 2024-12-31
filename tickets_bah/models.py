@@ -2,6 +2,7 @@ from unicodedata import decimal
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager,PermissionsMixin
+from django.utils.timezone import now
 
 
 class UtilisateurManager(BaseUserManager):
@@ -47,13 +48,13 @@ class Offre(models.Model):
 
 #Model Rservation
 class Reservation(models.Model):
-     utilisateur = models.ForeignKey('tickets_bah.Utilisateur', on_delete=models.CASCADE)
-     offre = models.ForeignKey('tickets_bah.Offre', on_delete=models.CASCADE)
-     cle_billet = models.CharField(max_length=255)
-     qr_code = models.ImageField(upload_to='qr_codes/') #fichier qr code associé
+    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE)
+    offre = models.ForeignKey('Offre', on_delete=models.CASCADE)
+    cle_billet = models.CharField(max_length=100, unique=True)
+    qr_code = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
 
-     def __str__(self):
-         return f'{self.utilisateur} {self.offre}'
+    def __str__(self):
+        return f"Reservation pour {self.utilisateur.nom} - {self.offre.nom}"
 
 #configuration de l'authentification
 class UtilisateurProfile(models.Model):
