@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- head -->
+{% include 'appAdmin/include/head.html' %}
+<!-- end head -->
+<!-- summernote file -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+
+<!-- Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+
+<body>
+    <!-- ======= Header menu horizontal ======= -->
+    {% include 'appAdmin/include/header_menu.html' %}
+    <!-- End Header menu horizontal -->
+
+    <!-- ======= Sidebar menu vertical ======= -->
+    {% include 'appAdmin/include/sidebar_menu.html' %}
+    <!-- End Sidebar menu vertical-->
+
+    <main id="main" class="main">
+
+        <!-- fil-arial -->
+        <div class="pagetitle">
+            <h1>{% block title %}{% endblock %}</h1>
+            <nav>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="javascript: void(0);" style="text-decoration: none;">Olympique tickets</a>
+                    </li>
+                    <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+                    <li class="breadcrumb-item active">{% block subTitle %}{% endblock %}</li>
+                </ol>
+            </nav>
+        </div>
+        <!-- end fil-arial -->
+
+        <!-- Contenu -->
+        {% block content %}{% endblock %}
+        <!-- End Contenu -->
+
+    </main><!-- End #main -->
+
+    <!-- ======= Footer ======= -->
+    {% include 'appAdmin/include/footer.html' %}
+    <!-- End Footer -->
+
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i
+            class="bi bi-arrow-up-short"></i></a>
+
+    <!-- jsfile -->
+    {% include 'appAdmin/include/scriptJS.html' %}
+
+    <!-- script js -->
+    {% block customScript %}{% endblock customScript %}
+    <!-- end script js -->
+
+    <!-- end jsfile -->
+
+    <!-- summernote file -->
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    {% load sweetify %}
+    {% sweetify %}
+</body>
+
+</html>
