@@ -41,7 +41,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4&x#ke^@-8d1-25(ztbg4h56f6x#0y-mqr=ll3+-v=zyefnk%z"
+# SECRET_KEY for the application is now loaded from environment variables for
+# better security. A default value is provided for development environments.
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "django-insecure-4&x#ke^@-8d1-25(ztbg4h56f6x#0y-mqr=ll3+-v=zyefnk%z",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -61,6 +66,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "tickets_bah",
     "appAdmin",
+    "political_party",
 ]
 
 MIDDLEWARE = [
@@ -104,13 +110,13 @@ WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 
 
 # Paramètres pour l'envoi d'e-mails
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"  # Serveur SMTP
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'renaudninho@gmail.com'  # Remplacez par votre email
-EMAIL_HOST_PASSWORD = 'eypxafftszttbngv'  # Remplacez par votre mot de passe ou App Password
-DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = "noreply@gmail.com"
 
 
 
