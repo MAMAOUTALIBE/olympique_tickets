@@ -1,7 +1,10 @@
 # Plateforme d'achat des tickets des jeux olympiques en ligne
 
 ## Description
-Ce projet est une application Django permettant aux utilisateurs d'acheter des tickets en ligne et de procéder au paiement sécurisé via Stripe. 
+Ce projet est une application Django permettant aux utilisateurs d'acheter des tickets en ligne et de procéder au paiement sécurisé via Stripe.
+
+### Site dynamique pour un parti politique
+Une application `political_party` est incluse pour présenter l'actualité d'un parti politique. Les actualités peuvent être ajoutées via l'interface d'administration et consultées sur `/party/`.
 
 ## Fonctionnalités
 - Système d'achat de tickets en ligne
@@ -37,6 +40,7 @@ Pour éxècuter le projet en local, assurez vous d'avoir installés les prérequ
 ### 2. **Stripe Webhook**
 - Installez stripe : pip install stripe
 - Dans le .env mettez les clés  ==> STRIPE_SECRET_KEY_TEST, STRIPE_PUBLIC_KEY_TEST
+Ajoutez également `SECRET_KEY`, `EMAIL_HOST_USER` et `EMAIL_HOST_PASSWORD` pour la configuration Django et l'envoi d'e-mails.
 - Créez un compte Stripe et activez le webhook
 - Configurez le webhook pour envoyer les données de paiement vers votre application
 - Dans votre application, configurez le webhook pour recevoir les données de paiement
