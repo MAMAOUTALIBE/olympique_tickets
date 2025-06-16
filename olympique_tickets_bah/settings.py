@@ -108,8 +108,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'renaudninho@gmail.com'  # Remplacez par votre email
-EMAIL_HOST_PASSWORD = 'eypxafftszttbngv'  # Remplacez par votre mot de passe ou App Password
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
 
 
@@ -185,7 +185,5 @@ LOGIN_REDIRECT_URL = '/'  # Par exemple, la page d'accueil
 # Configuration de Sweetify
 SWEETIFY_SWEETALERT_LIBRARY = 'sweetalert2'
 
-
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY_TEST', "secret")
 
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', "secret")
