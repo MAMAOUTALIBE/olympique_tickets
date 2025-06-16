@@ -1,0 +1,15 @@
+{% extends 'appAdmin/layout.html' %}
+{% block content %}
+<h1>Actualités du Parti Politique</h1>
+<ul>
+    {% for news in news_list %}
+    <li>
+        <h2>{{ news.title }}</h2>
+        <p>{{ news.content }}</p>
+        <small>{{ news.published_at }}</small>
+    </li>
+    {% empty %}
+    <li>Aucune actualité disponible.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
