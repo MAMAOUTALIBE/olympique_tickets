@@ -1,0 +1,106 @@
+{% extends 'appAdmin/layout.html' %}
+{% load static %}
+{% block title %}
+{{ title }}
+{% endblock %}
+{% block subTitle %}
+{{ subTitle }}
+{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-xxl-4 col-md-4">
+        <div class="card info-card sales-card">
+            <div class="card-body">
+                <h5 class="card-title">Nombre d'utilisateurs <span></span></h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center bg-success"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-people-fill text-white"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h4 class="text-success">{{ count.utilisateurs }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl-4 col-md-4">
+        <div class="card info-card sales-card">
+            <div class="card-body">
+                <h5 class="card-title">Nombre d'offres <span></span></h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center bg-secondary"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-controller text-white"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h4 class="text-secondary">{{ count.offres }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xxl-4 col-md-4">
+        <div class="card info-card sales-card">
+            <div class="card-body">
+                <h5 class="card-title">Nombre de réservations<span></span></h5>
+                <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center bg-primary"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-bank text-white"></i>
+                    </div>
+                    <div class="ps-3">
+                        <h4 class="text-primary">{{ count.reservations }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive mt-4">
+                <table class="table table-bordered" id="adminTable">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center">#</th>
+                            <th scope="col" class="text-center">Utilisateur</th>
+                            <th scope="col" class="text-center">Offre</th>
+                            <th scope="col" class="text-center">Code Qr</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in get_reservations %}
+                        <tr>
+                            <th scope="row" class="text-center">{{ forloop.counter }}</th>
+                            <td class="text-center">{{item.utilisateur.nom}} {{item.utilisateur.prenom}}</td>
+                            <td class="text-center">{{ item.offre.nom }}</td>
+                            <td class="text-center">
+                                {% if item.qr_code %}
+                                <img src="{{ item.qr_code.url }}" alt="QR Code" width="75" height>
+                                {% else %}
+                                <p>Pas de code qr pour cette réservation</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block customScript %}
+
+<script>
+    var dataTitle = "{{dataTitle}}";
+    var dataSubTitle = "{{dataSubTitle}}";
+</script>
+
+<script src="{% static 'admin/assets/js/custom/admin.js' %}"></script>
+{% endblock %}

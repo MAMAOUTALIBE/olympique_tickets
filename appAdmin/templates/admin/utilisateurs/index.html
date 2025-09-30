@@ -1,0 +1,85 @@
+{% extends 'appAdmin/layout.html' %}
+{% load static %}
+{% block title %}
+{{ title }}
+{% endblock %}
+{% block subTitle %}
+{{ subTitle }}
+{% endblock %}
+{% block content %}
+<section class="section dashboard">
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-sm-12 mt-4" style="text-align: right">
+                    
+                </div><!-- end col-->
+            </div>
+
+            <div class="table-responsive mt-4">
+                <table class="table table-bordered" id="adminTable">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center">#</th>
+                            <th scope="col" class="text-center">Nom</th>
+                            <th scope="col" class="text-center">Prénom(s)</th>
+                            <th scope="col" class="text-center">Email</th>
+                            <th scope="col" class="text-center">Date d'ajout</th>
+                            <th scope="col" class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in utilisateurs %}
+                        <tr>
+                            <th scope="row" class="text-center">{{ forloop.counter }}</th>
+                            <td class="text-center">{{item.nom}}</td>
+                            <td class="text-center">{{item.prenom}}</td>
+                            <td class="text-center"> {{item.email}}</td>
+                            <td class="text-center"> {{item.createdAt}}</td>
+                            <td class="text-center">
+                                <a href="#" class="btn btn-sm btn-danger"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal_{{item.id}}"
+                                ><i
+                                        class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="deleteModal_{{item.id}}" tabindex="-1" aria-labelledby="deleteModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="deleteModalLabel">Suppression de l'offre {{item.nom}} <i class="text-danger bi bi-trash"></i></h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                       <b> Voulez-vous supprimer l'utilisateur {{ item.nom }} {{ item.prenom }}</b>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Non</button>
+                                        <a href="{% url 'utilisateurs.delete' item.id %}" class="btn btn-danger">Oui</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+
+{% block customScript %}
+<script>
+    var dataTitle = "{{dataTitle}}";
+    var dataSubTitle = "{{dataSubTitle}}";
+</script>
+
+<script src="{% static 'admin/assets/js/custom/admin.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Jeux Olympiques</title>
+    <link rel="stylesheet" href="{% static 'tickets/style.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+    <!-- Vendor CSS Files -->
+    <link href="{% static 'admin/assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+
+    <!-- Template Main CSS File -->
+    <link href="{% static 'admin/assets/css/style.css' %}" rel="stylesheet">
+
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Jeux Olympiques 2024</a>
+            <a href="/" class="btn btn-outline-light">Accueil</a>
+        </div>
+    </nav>
+
+    <!-- Formulaire d'inscription -->
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Création de Compte</h1>
+        <form method="POST" action="{% url 'register' %}" class="mx-auto" style="max-width: 500px;">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="nom" class="form-label">Nom</label>
+                <input type="text" class="form-control" id="nom" name="nom" required>
+            </div>
+            <div class="mb-3">
+                <label for="prenom" class="form-label">Prénom</label>
+                <input type="text" class="form-control" id="prenom" name="prenom" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            
+            <div class="col-12 mb-2">
+                <button type="submit" class="btn btn-success w-100">S'inscrire</button>
+            </div>
+            <div class="col-12">
+                <p class="mb-0">Vous disposez d'un compte ? <a href="{% url 'login' %}">Connectez-vous ici</a>
+                </p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-3 mt-5 text-center">
+        <p class="mb-0">&copy; 2024 Jeux Olympiques | Tous droits réservés</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% load sweetify %}
+    {% sweetify %}
+</body>
+</html>

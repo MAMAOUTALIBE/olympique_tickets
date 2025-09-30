@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+{% include 'appAdmin/include/head.html' %}
+
+<body>
+  <!-- ======= Header menu horizontal ======= -->
+  {% include 'appAdmin/include/header_menu.html' %}
+  <!-- End Header menu horizontal -->
+
+  <!-- ======= Sidebar menu vertical ======= -->
+  {% include 'appAdmin/include/sidebar_menu.html' %}
+  <!-- End Sidebar menu vertical-->
+
+  <main id="main" class="main">
+    <div class="pagetitle">
+      <h1>{% block title %}{% endblock %}</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="javascript: void(0);" style="text-decoration: none;">Olympique tickets</a>
+          </li>
+          <li class="breadcrumb-item"><a href="javascript: void(0);">Admin</a></li>
+          <li class="breadcrumb-item active">{% block subTitle %}{% endblock %}</li>
+        </ol>
+      </nav>
+    </div>
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'appAdmin/include/footer.html' %}
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  {% include 'appAdmin/include/scriptJS.html' %}
+
+  {% block customScript %}{% endblock customScript %}
+
+  {% load sweetify %}{% sweetify %}
+</body>
+</html>

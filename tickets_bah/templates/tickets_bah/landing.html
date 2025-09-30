@@ -1,0 +1,54 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Buy cool new product</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body>
+    <section>
+        <div class="product">
+            <img src="https://i.imgur.com/EHyR2nP.png" alt="The cover of Stubborn Attachments" />
+            <div class="description">
+                <h3>{{ offre.nom }}</h3>
+                <h5>{{ offre.prix }} €</h5>
+            </div>
+        </div>
+            <button type="submit" id="checkout-button">Checkout</button>
+    </section>
+    {% csrf_token %}
+</body>
+<script type="text/javascript">
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    var stripe = Stripe("pk_test_51QrK9VCFBQnzLE1wje5XdngNgRzpXlenCsNRtpPqpN1Ch76rmwYnNhv8Xzcge2MP1mSPOR9DQ1BHXfBPVVYHoToD00H0GYyhCl")
+    var checkoutButton = document.getElementById('checkout-button');
+    checkoutButton.addEventListener('click', function () {
+        fetch("{% url 'create_checkout_session' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            }
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (session) {
+                return stripe.redirectToCheckout({ sessionId: session.id });
+            })
+            .then(function (result) {
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.error("Error : ", error);
+            });
+    });
+</script>
+
+</html>
