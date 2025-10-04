@@ -1,0 +1,81 @@
+{% extends 'appFront/layout.html' %}
+{% load static %} 
+{% block content %}
+<div class="reservation-container">
+    <div class="container">
+        <div class="reservation-card mx-auto">
+            <h1 class="reservation-title">Réservation</h1>
+            
+            <div class="form-group-elegant">
+                <label for="utilisateur_id" class="form-label-elegant">
+                    Utilisateur
+                </label>
+                <input
+                    type="text"
+                    class="form-control form-control-elegant"
+                    id="utilisateur_id"
+                    name="utilisateur_id"
+                    value="{{ request.user.nom }} {{ request.user.prenom }}"
+                    readonly
+                />
+            </div>
+
+            <div class="form-group-elegant">
+                <label for="offre_id" class="form-label-elegant">
+                    Offre sélectionnée
+                </label>
+                <input
+                    type="text"
+                    class="form-control form-control-elegant"
+                    id="offre_nom"
+                    value="{{ offre.nom }}"
+                    readonly
+                />
+                <input type="hidden" id="offre_id" value="{{ offre.id }}" />
+                <span class="info-badge">Prêt pour le paiement sécurisé</span>
+            </div>
+
+            <button class="btn btn-payment" id="checkout-button">
+                Valider et payer
+            </button>
+            {% csrf_token %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block customScript %}
+<script type="text/javascript">
+  var stripe = Stripe("{{ STRIPE_PUBLIC_KEY }}");
+  var checkoutButton = document.getElementById("checkout-button");
+  var checkoutSessionUrl = "{% url 'create_checkout_session' %}";
+  checkoutButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    fetch(checkoutSessionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      body: JSON.stringify({
+        offre_id: "{{ offre.id }}", // ID de l'offre sélectionnée
+        utilisateur_id: "{{ request.user.id }}", // ID de l'utilisateur connecté
+      }),
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (session) {
+        if (session.error) {
+          alert(session.error);
+        } else {
+          return stripe.redirectToCheckout({ sessionId: session.id });
+        }
+      })
+      .catch(function (error) {
+        console.error("Error : ", error);
+      });
+  });
+</script>
+{% endblock %}

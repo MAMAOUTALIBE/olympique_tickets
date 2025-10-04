@@ -1,0 +1,55 @@
+{% extends 'appAdmin/layout.html' %}
+{% load static %}
+{% block title %}
+{{ title }}
+{% endblock %}
+{% block subTitle %}
+{{ subTitle }}
+{% endblock %}
+{% block content %}
+<section class="section dashboard">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{subTitle}}</h5>
+            <!-- Vertical Form -->
+            <form class="row g-3" action="{% url 'offres.update' offre.id %}" method="POST">
+                {% csrf_token %}
+                <div class="col-4">
+                    <label for="nom" class="form-label"><b>Nom <i class="text-danger">*</i></b></label>
+                    <input type="text" class="form-control" name="nom" id="nom" value="{{ offre.nom }}">
+                </div>
+                <div class="col-4">
+                    <label for="prix" class="form-label"><b>Prix <i class="text-danger">*</i></b></label>
+                    <input type="number" class="form-control" name="prix" id="prix" value="{{ offre.prix }}">
+                </div>
+                <div class="col-4">
+                    <label for="nombre_de_places" class="form-label"><b>Nom de place(s) <i
+                                class="text-danger">*</i></b></label>
+                    <input type="number" class="form-control" name="nombre_de_places" id="nombre_de_places" value="{{ offre.nombre_de_places }}">
+                </div>
+                <div class="col-12">
+                    <label for="description" class="form-label"><b>Description</b></label>
+                    <textarea cols="5" rows="5" class="form-control" name="description" id="description">{{ offre.description }}</textarea>
+                </div>
+                <div class="text-end">
+                    <button class="btn btn-primary">Enregistrer</button>
+                    <a href="{% url 'offres.index' %}" type="reset" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+            <!-- Vertical Form -->
+        </div>
+    </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+
+{% block customScript %}
+
+<script>
+    var dataTitle = "{{dataTitle}}";
+    var dataSubTitle = "{{dataSubTitle}}";
+</script>
+
+<script src="{% static 'admin/assets/js/custom/admin.js' %}"></script>
+{% endblock %}

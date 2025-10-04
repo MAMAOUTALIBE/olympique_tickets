@@ -1,0 +1,66 @@
+{% extends 'appFront/layout.html' %} {% load static %} {% block content %}
+
+<div class="ticket-container">
+  <div class="container">
+    <div class="ticket-wrapper">
+      <div class="ticket-header">
+        <h1 class="ticket-main-title">E-Billet Validé</h1>
+        <p class="ticket-subtitle">
+          Votre réservation a été confirmée avec succès
+        </p>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-header">
+          <h3 class="ticket-offer-name">{{ reservation.offre.nom }}</h3>
+        </div>
+
+        <div class="ticket-card-body">
+          <div class="ticket-info-section">
+            <div class="ticket-info-item">
+              <span class="ticket-info-label"> Nom du titulaire</span>
+              <div class="ticket-info-value">
+                {{ reservation.utilisateur.nom }}
+              </div>
+            </div>
+
+            <div class="ticket-info-item">
+              <span class="ticket-info-label"> Email</span>
+              <div class="ticket-info-value">
+                {{ reservation.utilisateur.email }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ticket-divider"></div>
+
+          <div class="ticket-key">
+            <div class="ticket-key-label">Clé du billet</div>
+            <div class="ticket-key-value">{{ reservation.cle_billet }}</div>
+          </div>
+
+          <div class="qr-code-section">
+            <div class="qr-code-title">Scannez pour valider</div>
+            {% if reservation.qr_code %}
+            <img
+              src="{{ reservation.qr_code.url }}"
+              alt="QR Code"
+              class="qr-code-image img-fluid"
+            />
+            {% else %}
+            <p class="no-qr-message">Aucun QR code disponible.</p>
+            {% endif %}
+          </div>
+
+          <div class="col-12">
+            <a href="{% url 'home' %}" class="btn btn-home"
+              >Retour à l'accueil</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block customScript %} {% endblock %}

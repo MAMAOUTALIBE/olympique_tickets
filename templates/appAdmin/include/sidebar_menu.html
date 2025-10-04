@@ -1,0 +1,59 @@
+{% load static %}
+<!-- ======= Sidebar ======= -->
+<aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+        <li class="nav-item">
+            <a class="nav-link " href="{% url 'dashboard' %}">
+                <i class="bi bi-grid"></i>
+                <span>Dashboard</span>
+            </a>
+        </li><!-- End Dashboard Nav -->
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-people"></i><span>Utilisateurs</span><i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="{% url 'utilisateurs.index' %}">
+                        <i class="bi bi-circle"></i><span>Utilisateurs</span>
+                    </a>
+                </li>
+            </ul>
+        </li><!-- End Components Nav -->
+
+        <li class="nav-heading">Pages</li>
+
+        <li class="nav-item {% if child == 'offre' %}active{% endif %}">
+            <a class="nav-link collapsed" href="{% url 'offres.index' %}">
+                <i class="bi bi-ticket-fill"></i>
+                <span>Offres</span>
+            </a>
+        </li><!-- End Profile Page Nav -->
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="{% url 'reservations.index' %}">
+                <i class="bi bi-app-indicator"></i>
+                <span>Réservations</span>
+            </a>
+        </li><!-- End F.A.Q Page Nav -->
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="{% url 'paniers.index' %}">
+                <i class="bi bi-bag-fill"></i>
+                <span>Panier</span>
+            </a>
+        </li><!-- End Contact Page Nav -->
+
+        <li class="nav-item">
+            <a class="nav-link collapsed" href="{% url 'logout' %}">
+                <i class="bi bi-box-arrow-right "></i>
+                <span>Se déconnecter</span>
+            </a>
+        </li><!-- End Blank Page Nav -->
+
+    </ul>
+
+</aside><!-- End Sidebar-->

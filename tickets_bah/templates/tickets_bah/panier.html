@@ -1,0 +1,47 @@
+{% extends 'appFront/layout.html' %} {% load static %} {% block content %}
+<div class="cart-container">
+    <div class="container">
+        <div class="cart-header">
+            <h1 class="cart-title">Votre Panier</h1>
+            <p class="cart-subtitle">Gérez vos offres sélectionnées</p>
+        </div>
+
+        <div class="cart-content">
+            {% if panier_items %}
+                <div class="cart-items-list">
+                    {% for item in panier_items %}
+                        <div class="cart-item">
+                            <div class="cart-item-info">
+                                <div class="cart-item-name">{{ item.offre.nom }}</div>
+                                <span class="cart-item-date"> Ajouté le {{ item.date_ajout }}</span>
+                            </div>
+                            <div class="cart-item-actions">
+                                <span class="cart-item-price">{{ item.offre.prix }} €</span>
+                                <a href="{% url 'reservation_create' %}?offre_id={{ item.offre.id }}" class="btn btn-reserve">Réserver</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="cart-summary">
+                    <p class="cart-summary-text">
+                        {{ panier_items|length }} offre{{ panier_items|length|pluralize }} dans votre panier
+                    </p>
+                </div>
+            {% else %}
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p class="empty-cart-text">Votre panier est vide.</p>
+                    <p style="color: #999;">Découvrez nos offres et ajoutez-les à votre panier !</p>
+                </div>
+            {% endif %}
+
+            <div class="text-center">
+                <a href="{% url 'offres_list' %}" class="btn btn-back">Retour aux offres</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %} {% block customScript %} {% endblock %}

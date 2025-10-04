@@ -1,0 +1,57 @@
+{% extends 'appFront/layout.html' %}
+{% load static %}
+{% block content %}
+<!-- Particules bleues subtiles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Section Hero -->
+    <div class="hero-section">
+        <!-- Accents décoratifs bleus -->
+        <div class="blue-accent accent-1"></div>
+        <div class="blue-accent accent-2"></div>
+
+        <!-- Anneaux olympiques en arrière-plan -->
+        <div class="olympic-rings">
+            <div class="ring ring1"></div>
+            <div class="ring ring2"></div>
+            <div class="ring ring3"></div>
+            <br>
+            <div class="ring ring4"></div>
+            <div class="ring ring5"></div>
+        </div>
+
+        <!-- Carte de contenu -->
+        <div class="container">
+            <div class="content-card">
+                <div class="decorative-line"></div>
+                <h1 class="display-4">Bienvenue aux Jeux Olympiques 2024</h1>
+                <p class="lead">Vivez l'excitation des plus grandes compétitions sportives mondiales. Explorez nos offres exclusives et réservez vos billets pour les épreuves officielles.</p>
+                
+                <!-- Icônes de sports -->
+                <div class="sport-icons">
+                    <span class="sport-icon">⚽</span>
+                    <span class="sport-icon">🏀</span>
+                    <span class="sport-icon">🏊</span>
+                    <span class="sport-icon">🏃</span>
+                    <span class="sport-icon">🚴</span>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{% url 'offres_list' %}" class="btn btn-elegant">
+                        Découvrir les Offres
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block customScript %}
+{% endblock %}

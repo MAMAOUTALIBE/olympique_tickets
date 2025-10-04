@@ -1,0 +1,33 @@
+{% extends 'appFront/layout.html' %} {% load static %} {% block content %}
+
+<!-- Liste des offres -->
+<div class="container mt-5">
+  <h1 class="mb-4 text-center">Nos Offres Disponibles</h1>
+  <div class="row">
+    {% for offre in offres %}
+    <div class="col-md-4">
+      <div class="content-card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ offre.nom }}</h5>
+          <p class="card-text">{{ offre.description }}</p>
+          <p class="fw-bold text-primary">Prix : {{ offre.prix }} €</p>
+          <div class="btn-group-inline">
+            <a
+              href="{% url 'ajouter_au_panier' offre.id %}"
+              class="btn btn-elegant-green"
+              >Ajouter au panier</a
+            >
+            <a
+              href="{% url 'reservation_create' %}?offre_id={{ offre.id }}"
+              class="btn btn-elegant-blue"
+              >Réserver</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %} {% block customScript %} {% endblock %}

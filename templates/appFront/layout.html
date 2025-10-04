@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <!-- head -->
+  {% include 'appFront/include/head.html' %}
+  <!-- end head -->
+  <body>
+    <!-- header -->
+    {% include 'appFront/include/header.html' %}
+    <!-- end header -->
+
+    <!-- Contenu -->
+    {% block content %}{% endblock %}
+    <!-- End Contenu -->
+
+    <!-- footer -->
+    {% include 'appFront/include/footer.html' %}
+    <!-- end footer -->
+
+    <!-- scriptJS -->
+    {% include 'appFront/include/scriptJS.html' %}
+    <!-- end scriptJS -->
+
+    {% block customScript %}{% endblock customScript %}
+  </body>
+</html>
