@@ -1,1 +1,15 @@
+.env__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
 .env
+venv/
+.env.*/
+dist/
+build/
+*.egg-info/
+
+.env
+.env.*
+*.env
