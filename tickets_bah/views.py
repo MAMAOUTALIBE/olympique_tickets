@@ -23,6 +23,13 @@ import stripe
 import json
 import logging
 
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from django.contrib.staticfiles import finders
+from django.conf import settings
+import os
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -56,37 +63,6 @@ def reservation_create(request):
         offre = get_object_or_404(Offre, id=offre_id)
 
     return render(request, 'tickets_bah/reservation_form.html', {'offre': offre, "STRIPE_PUBLIC_KEY": settings.STRIPE_PUBLIC_KEY,})
-
-"""@user_passes_test(user_is_authenticate, login_url="/login")
-def reservation_store(request):
-    Stocke les données de réservation et génère le billet
-    if request.method == 'POST':
-        user = request.user
-        utilisateur = get_object_or_404(Utilisateur, id=user.id)
-        offre = get_object_or_404(Offre, id=request.POST.get('offre_id'))
-
-        # Créer une clé unique pour la réservation
-        cle_billet = str(uuid.uuid4())[:12]
-
-        # Créer la réservation
-        reservation = Reservation.objects.create(
-            utilisateur=utilisateur,
-            offre=offre,
-            cle_billet=cle_billet
-        )
-
-        # Générer et sauvegarder le QR code
-        reservation.generate_qr_code()
-        reservation.save()
-
-        # Stocker l'ID de la réservation dans la session
-        request.session['reservation_id'] = reservation.id
-
-        # Envoyer l'e-mail de confirmation
-        envoyer_confirmation_reservation(utilisateur, reservation)
-        sweetify.success(request, "Réservation effectuée avec succès !", button='Ok', timer=3000)
-        return redirect("e_billet")"""
-   
 
 
 #CREER LES VUES POUR: INSCRIPTION, CONNEXION, DECONNEXION
@@ -171,7 +147,7 @@ def ajouter_au_panier(request, offre_id):
         return redirect('panier')
 
 
-#VUE POUR AFFICHER LAE PANIER
+#VUE POUR AFFICHER LE PANIER
 @user_passes_test(user_is_authenticate, login_url="/login")
 def panier(request):
     if request.user.is_authenticated:
@@ -183,39 +159,6 @@ def panier(request):
             "panier_items": panier_items
         }
         return render(request, 'tickets_bah/panier.html', context) 
-
-
-# UNE FONCTION POUE ENVOYER EMEIL DE CONFIRMATION
-
-
-#vue pour creer une reservation
-"""def reservation_create(request):
-    if request.method == 'POST':
-        utilisateur_id = request.POST.get('utilisateur_id')
-        offre_id = request.POST.get('offre_id')
-
-        utilisateur =get_object_or_404(Utilisateur, id=utilisateur_id)
-        offre = get_object_or_404(Offre, id=offre_id)
-
-        #creer une reservation
-        reservation = Reservation.objects.create(utilisateur=utilisateur, offre=offre,
-        cle_billet="unique_key_here", #generer une clés ici
-        qr_code="qr_code_placeholder.png" # generer le qr code
-     )
-        return HttpResponse("Reservation creer avec succes")
-    return render(request, "tickets_bah/Reservation_form.html")"""
-
-
-
-#CREER LA RESERVATION
-
-#GENERATION DE QR CODE AVEC LES BILLETS
-"""def generate_qr_code(reservation):
-    qr_dara = f"{reservation.utilisateur.cle_utilisateur} - {reservation.cle_billet}"
-    qr = qrcode.make(qr_dara)
-    buffer = BytesIO()
-    qr.save(buffer, format='PNG')
-    return ContentFile(buffer.getvalue(), name=f"qrcode_{reservation.id}.png")"""
 
 
 
@@ -357,3 +300,43 @@ def stripe_webhook(request):
         print('Paiement réussi...')
 
     return HttpResponse(status=200)
+
+
+#vue pour mettre le E-billet en pdf
+def _link_callback(uri, rel):
+    """
+    Convertit les URLs statiques/médias en chemins absolus pour xhtml2pdf.
+    """
+    # Static
+    result = finders.find(uri.replace(settings.STATIC_URL, '')) if uri.startswith(settings.STATIC_URL) else None
+    if result:
+        if not isinstance(result, (list, tuple)):
+            result = [result]
+        path = os.path.realpath(result[0])
+        return path
+
+    # Media
+    if uri.startswith(settings.MEDIA_URL):
+        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ''))
+        if os.path.isfile(path):
+            return path
+
+    # Absolu (http/https) -> laisse tel quel (QR code en URL absolue)
+    return uri
+
+def ebillet_pdf(request, reservation_id):
+    from .models import Reservation
+    reservation = Reservation.objects.get(id=reservation_id)
+
+    html = render_to_string("tickets_bah/ebillet_pdf.html", {"reservation": reservation, "request": request})
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="E-Billet_{reservation.cle_billet}.pdf"'
+
+    pisa_status = pisa.CreatePDF(
+        src=html, dest=response, link_callback=_link_callback, encoding='UTF-8'
+    )
+
+    if pisa_status.err:
+        return HttpResponse("Erreur de génération PDF", status=500)
+    return response

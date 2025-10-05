@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+
+</head>
+<body>
+  <h1>E-Billet Validé</h1>
+  <div class="card">
+    <div class="row"><span class="label">Offre :</span> {{ reservation.offre.nom }}</div>
+    <div class="row"><span class="label">Nom :</span> {{ reservation.utilisateur.nom }}</div>
+    <div class="row"><span class="label">Email :</span> {{ reservation.utilisateur.email }}</div>
+    <div class="row"><span class="label">Clé du billet :</span> {{ reservation.cle_billet }}</div>
+    {% if reservation.qr_code %}
+    <div class="qr">
+      <img src="{{ reservation.qr_code.url }}" alt="QR Code" class="qr-code-image img-fluid">
+    </div>
+    {% endif %}
+  </div>
+    <style>
+      body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12pt; }
+      .card { border:1px solid #333; border-radius:8px; padding:16px; }
+      h1 { text-align:center; margin:0 0 10px; }
+      .row { margin:6px 0; }
+      .label { font-weight:700; width:170px; display:inline-block; }
+      .qr { text-align:center; margin-top:10px; }
+      .qr img { width:160px; }
+</style>
+
+</body>
+</html>

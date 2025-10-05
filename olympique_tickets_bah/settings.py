@@ -104,8 +104,9 @@ WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 
 
 # Paramètres pour l'envoi d'e-mails
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP
+## settings.py (dev)
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'renaudninho@gmail.com'  # Remplacez par votre email

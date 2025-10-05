@@ -20,4 +20,5 @@ urlpatterns = [
     path('create_checkout_session/', views.create_checkout_session, name='create_checkout_session'),
     path('reservation/success', views.reservation_success, name='reservation_success'),
     path('webhook/stripe/', views.stripe_webhook, name='stripe_webhook'),
+    path("ebillet/pdf/<int:reservation_id>/", views.ebillet_pdf, name="ebillet_pdf"),
 ]

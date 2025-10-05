@@ -24,7 +24,7 @@
 .navbar-brand {
     font-size: 1.8rem;
     font-weight: 700;
-    color: chartreuse!important;
+    color: #ffffff !important;
     transition: transform 0.3s ease;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -98,7 +98,7 @@
 
 /* Carte de contenu */
 .content-card {
-    background: red;
+    background: #ffffff;
     border-radius: 25px;
     padding: 4rem 3rem;
     box-shadow: 0 15px 60px rgba(0, 102, 204, 0.12);
