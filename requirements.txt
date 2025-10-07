@@ -8,3 +8,5 @@ qrcode[pil]
 Pillow
 
 stripe
+
+xhtml2pdf
