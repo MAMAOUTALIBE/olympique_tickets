@@ -17,3 +17,23 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de données locale
+*.sqlite3
+
+# macOS / Windows
+.DS_Store
+
+# Static files and media
+/staticfiles/
+/media/
+
+/.env
