@@ -107,6 +107,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 WHITENOISE_MANIFEST_STRICT = False
 
 # Django 5+ storages
+WHITENOISE_MANIFEST_STRICT = False
+
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
