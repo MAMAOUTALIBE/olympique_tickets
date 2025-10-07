@@ -21,4 +21,5 @@ urlpatterns = [
     path('reservation/success', views.reservation_success, name='reservation_success'),
     path('webhook/stripe/', views.stripe_webhook, name='stripe_webhook'),
     path("ebillet/pdf/<int:reservation_id>/", views.ebillet_pdf, name="ebillet_pdf"),
+    path("sports", views.sports, name="sports"),
 ]

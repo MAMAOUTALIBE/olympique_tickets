@@ -1,0 +1,37 @@
+{% extends "appFront/layout.html" %}
+{% load static %}
+
+{% block title %}Sports - JO Paris 2024{% endblock %}
+
+{% block content %}
+<h2>Liste des Sports Olympiques</h2>
+
+<div class="search-filter">
+  <input type="text" id="search" placeholder="Rechercher un sport..." onkeyup="filtrerSports()">
+</div>
+
+<div class="sports-grid" id="sports-list">
+  <div class="sport-card">
+    <img src="{% static 'admin/assets/img/athletisme.png' %}" alt="Athlétisme">
+    <h3>Athlétisme</h3>
+    <p>Courses, sauts et lancers emblématiques des Jeux.</p>
+  </div>
+  <div class="sport-card">
+    <img src="{% static 'admin/assets/img/natation.png' %}" alt="Natation">
+    <h3>Natation</h3>
+    <p>Épreuves en piscine et en eau libre.</p>
+  </div>
+  <!-- autres cartes… -->
+</div>
+
+<script>
+function filtrerSports() {
+  const input = document.getElementById("search").value.toLowerCase();
+  const cards = document.querySelectorAll(".sport-card");
+  cards.forEach(card => {
+    const title = card.querySelector("h3").textContent.toLowerCase();
+    card.style.display = title.includes(input) ? "block" : "none";
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+.container {
+    width: 90%;
+    margin: 40px auto;
+    text-align: center;
+}
+
+.search-filter {
+    margin-bottom: 20px;
+}
+
+#search {
+    padding: 10px;
+    width: 60%;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.sports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.sport-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.sport-card:hover {
+    transform: scale(1.05);
+}
+
+.sport-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.sport-card h3 {
+    margin: 10px 0;
+    color: #0057b7;
+}

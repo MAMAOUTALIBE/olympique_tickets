@@ -29,6 +29,7 @@ from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
 from django.conf import settings
 import os
+from django.shortcuts import render
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -340,3 +341,6 @@ def ebillet_pdf(request, reservation_id):
     if pisa_status.err:
         return HttpResponse("Erreur de génération PDF", status=500)
     return response
+
+def sports(request):
+    return render(request, 'tickets_bah/sports.html')

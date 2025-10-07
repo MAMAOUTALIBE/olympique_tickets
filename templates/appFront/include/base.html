@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}JO Paris 2024{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'admin/assets/css/sport.css' %}">
+</head>
+<body>
+  <nav class="navbar">
+    <ul>
+      <li><a href="{% url 'sports' %}">Sports</a></li>
+      <!-- autres liens… -->
+    </ul>
+  </nav>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

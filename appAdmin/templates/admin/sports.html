@@ -1,0 +1,88 @@
+{% extends "appAdmin/layout.html" %}
+{% load static %}
+
+{% block title %}Sports{% endblock %}
+{% block subTitle %}Catalogue des sports olympiques{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="card-title mb-0">Liste des sports</h5>
+        <input id="search" type="text" class="form-control" style="max-width: 320px;"
+               placeholder="Rechercher un sport…" onkeyup="filtrerSports()">
+      </div>
+
+      <div id="sports-list" class="row g-3">
+        <!-- Athlétisme -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
+          <div class="card h-100 shadow-sm">
+            <img class="card-img-top" src="{% static 'tickets/images/athletisme.jpg' %}" alt="Athlétisme">
+            <div class="card-body">
+              <h6 class="card-title mb-1">Athlétisme</h6>
+              <p class="text-muted small mb-0">Courses, sauts et lancers.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Natation -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
+          <div class="card h-100 shadow-sm">
+            <img class="card-img-top" src="{% static 'tickets/images/natation.jpg' %}" alt="Natation">
+            <div class="card-body">
+              <h6 class="card-title mb-1">Natation</h6>
+              <p class="text-muted small mb-0">Piscine & eau libre.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Football -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
+          <div class="card h-100 shadow-sm">
+            <img class="card-img-top" src="{% static 'tickets/images/football.jpg' %}" alt="Football">
+            <div class="card-body">
+              <h6 class="card-title mb-1">Football</h6>
+              <p class="text-muted small mb-0">Tournoi M/F.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Judo -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
+          <div class="card h-100 shadow-sm">
+            <img class="card-img-top" src="{% static 'tickets/images/judo.jpg' %}" alt="Judo">
+            <div class="card-body">
+              <h6 class="card-title mb-1">Judo</h6>
+              <p class="text-muted small mb-0">Arts martiaux.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gymnastique -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
+          <div class="card h-100 shadow-sm">
+            <img class="card-img-top" src="{% static 'tickets/images/gymnastique.jpg' %}" alt="Gymnastique">
+            <div class="card-body">
+              <h6 class="card-title mb-1">Gymnastique</h6>
+              <p class="text-muted small mb-0">Grâce & précision.</p>
+            </div>
+          </div>
+        </div>
+      </div><!-- /row -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block customScript %}
+<script>
+function filtrerSports() {
+  const q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('#sports-list .sport-card').forEach(card => {
+    const title = card.querySelector('.card-title').textContent.toLowerCase();
+    card.style.display = title.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

@@ -12,6 +12,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from tickets_bah.constance import user_role
+from django.views.generic import TemplateView
+
 
 # Create your views here.
 @user_passes_test(admin_is_authenticate, login_url="/")
@@ -225,3 +227,9 @@ def deleteUtilisateurs(request, id):
     except Exception as e:
         sweetify.error(request, f"Erreur lors de la suppression de l'utilisateur : {str(e)}", button='Fermer', timer=5000)    
     return redirect("utilisateurs.index")
+
+# vue page sport
+class SportPageView(TemplateView):
+    template_name = 'admin/sports.html'
+
+
