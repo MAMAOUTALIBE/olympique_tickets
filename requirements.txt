@@ -4,3 +4,5 @@ whitenoise
 dj-database-url
 python-dotenv
 sweetify
+qrcode[pil]
+Pillow
