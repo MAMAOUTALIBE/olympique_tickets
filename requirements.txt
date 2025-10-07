@@ -6,3 +6,5 @@ python-dotenv
 sweetify
 qrcode[pil]
 Pillow
+
+stripe
