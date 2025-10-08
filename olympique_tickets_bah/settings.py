@@ -46,6 +46,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
+ROOT_URLCONF = "olympique_tickets_bah.urls"
+WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -61,9 +65,6 @@ TEMPLATES = [
         },
     },
 ]
-
-ROOT_URLCONF = "olympique_tickets_bah.urls"
-WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 
 # --------- Database (Heroku + fallback local) ---------
 DATABASES = {
