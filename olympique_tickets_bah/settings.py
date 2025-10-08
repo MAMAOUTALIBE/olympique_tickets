@@ -107,6 +107,7 @@ DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+ALLOWED_HOSTS = ["olympique-tickets-bah.herokuapp.com", "localhost", "127.0.0.1"]
 DATABASES = {
   "default": {
     "ENGINE": "django.db.backends.postgresql",
