@@ -1,44 +1,28 @@
+# settings.py (extraits consolidés)
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
+import dj_database_url  # <-- assure-toi qu'il est dans requirements.txt
 
-
-MESSAGE_TAGS = {
-    messages.DEBUG: 'debug',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'error',
-}
-
-from dotenv import load_dotenv
-
-load_dotenv()  # Charge les variables d'environnement
-
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY_TEST', "secret")
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY_TEST', "public")
-
-
-#from tickets_bah import static
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# --------- Secrets & mode ---------
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe")  # ⚠️ mettre une vraie clé en prod via config vars
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    ".herokuapp.com,localhost,127.0.0.1"
+).split(",")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4&x#ke^@-8d1-25(ztbg4h56f6x#0y-mqr=ll3+-v=zyefnk%z"
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://*.herokuapp.com,https://localhost,https://127.0.0.1"
+    ).split(",")
+]
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['.ngrok-free.app', 'localhost', '127.0.0.1']
-
-
-# Application definition
-
+# --------- Apps / Middleware ---------
 INSTALLED_APPS = [
     "sweetify",
     "django.contrib.admin",
@@ -53,7 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Heroku static
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -63,143 +47,60 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "olympique_tickets_bah.urls"
-
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, 'templates')],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
 WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 
-# Paramètres pour l'envoi d'e-mails
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP
-#EMAIL_PORT = 587
-#EMAIL_USE_TLS = True
-#EMAIL_HOST_USER = 'bahm2062@gmail.com'  # Remplacez par votre email
-#EMAIL_HOST_PASSWORD = 'BAHmamadou2008@'  # Remplacez par votre mot de passe ou App Password
-#DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
-
-
-# Paramètres pour l'envoi d'e-mails
-## settings.py (dev)
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'bahm2062@gmail.com'  # Remplacez par votre email
-EMAIL_HOST_PASSWORD = 'eypxafftszttbngv'  # Remplacez par votre mot de passe ou App Password
-DEFAULT_FROM_EMAIL = 'noreply@gmail.com'
-
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-ALLOWED_HOSTS = ["olympique-tickets-bah.herokuapp.com", "localhost", "127.0.0.1"]
+# --------- Database (Heroku + fallback local) ---------
 DATABASES = {
-  "default": {
-    "ENGINE": "django.db.backends.postgresql",
-    "NAME": os.getenv("DB_NAME"),
-    "USER": os.getenv("DB_USER"),
-    "PASSWORD": os.getenv("DB_PASSWORD"),
-    "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-    "PORT": os.getenv("DB_PORT", "5432"),
-  }
+    "default": dj_database_url.config(
+        default=os.getenv(
+            "DATABASE_URL",
+            "postgres://olympique_user:MotDePasse_App14!@127.0.0.1:5432/tickets_olympique_bah"
+        ),
+        conn_max_age=600,
+        ssl_require=bool(os.getenv("DYNO")),  # DYNO est défini sur Heroku
+    )
 }
 
-    #"default": {
-        #"ENGINE": "django.db.backends.sqlite3",
-        #"NAME": BASE_DIR / "db.sqlite3",
-        #"USER": "username", #postgres
-        #"PASSWORD": "password",
-        #"HOST": "localhost",  # ou l'IP du serveur PostgreSQL
-        #"PORT": "5432",       # port par défaut de PostgreSQL
-    #}
-#}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-AUTH_USER_MODEL = 'tickets_bah.Utilisateur'
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
-LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = "UTC"
-
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    ".herokuapp.com,localhost,127.0.0.1"
-).split(",")
-
-CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in os.getenv(
-        "CSRF_TRUSTED_ORIGINS",
-        "https://*.herokuapp.com,https://localhost,https://127.0.0.1"
-    ).split(",")
-]
-
+# --------- Static / Media ---------
 STATIC_URL = "/static/"
-
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
+# --------- Sécurité prod ---------
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24  # ajuste si besoin
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# --------- Messages / Divers ---------
+MESSAGE_TAGS = {
+    messages.DEBUG: "debug",
+    messages.INFO: "info",
+    messages.SUCCESS: "success",
+    messages.WARNING: "warning",
+    messages.ERROR: "error",
+}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-LOGIN_REDIRECT_URL = '/'  # Par exemple, la page d'accueil
+AUTH_USER_MODEL = "tickets_bah.Utilisateur"
 
-# Configuration de Sweetify
-SWEETIFY_SWEETALERT_LIBRARY = 'sweetalert2'
+# --------- E-mail (ne PAS hardcoder) ---------
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.filebased.EmailBackend")
+EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH", str(BASE_DIR / "sent_emails"))
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
 
-
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY_TEST', "secret")
-
-STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', "secret")
+# --------- Stripe (via .env / config vars) ---------
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY_TEST", "secret")
+STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY_TEST", "public")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "secret")
