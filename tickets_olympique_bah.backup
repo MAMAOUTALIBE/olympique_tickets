@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Répertoire du projet (se place à la racine du script)
+cd "$(dirname "$0")/.."
+
+HOST="${HOST:-127.0.0.1}"
+PORT="${PORT:-5432}"
+DB="${DB:-tickets_olympique_bah}"
+USER="${USER:-olympique_user}"
+OUTDIR="${OUTDIR:-./backups}"
+STAMP="$(date +%Y%m%d_%H%M%S)"
+FILE="$OUTDIR/${DB}_${STAMP}.backup"
+
+mkdir -p "$OUTDIR"
+echo "➡️ dump $DB -> $FILE"
+PGPASSWORD="${PGPASSWORD:-}" pg_dump -h "$HOST" -p "$PORT" -U "$USER" -d "$DB" \
+  -Fc --no-owner --no-privileges -f "$FILE"
+echo "✅ ok: $FILE"
