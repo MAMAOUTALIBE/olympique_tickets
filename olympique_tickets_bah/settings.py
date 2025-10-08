@@ -167,6 +167,18 @@ USE_TZ = True
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    ".herokuapp.com,localhost,127.0.0.1"
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://*.herokuapp.com,https://localhost,https://127.0.0.1"
+    ).split(",")
+]
+
 STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
