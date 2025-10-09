@@ -10,9 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe")  # ⚠️ mettre une vraie clé en prod via config vars
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv(
-    "ALLOWED_HOSTS", ".herokuapp.com,localhost,127.0.0.1"
-).split(",") if h.strip()]
+ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
