@@ -1,4 +1,4 @@
-# settings.py (extraits consolidés)
+
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
@@ -10,10 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe")  # ⚠️ mettre une vraie clé en prod via config vars
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    ".herokuapp.com,localhost,127.0.0.1"
-).split(",")
+ALLOWED_HOSTS = [h.strip() for h in os.getenv(
+    "ALLOWED_HOSTS", ".herokuapp.com,localhost,127.0.0.1"
+).split(",") if h.strip()]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
