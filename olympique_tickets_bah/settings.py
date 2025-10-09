@@ -1,7 +1,6 @@
 
 from pathlib import Path
 import os
-import dj_database_url
 from django.contrib.messages import constants as messages
 import dj_database_url  # <-- assure-toi qu'il est dans requirements.txt
 
@@ -53,7 +52,7 @@ WSGI_APPLICATION = "olympique_tickets_bah.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],   # dossier optionnel pour tes templates projet
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
