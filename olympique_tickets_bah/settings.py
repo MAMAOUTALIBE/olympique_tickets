@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import os
+import dj_database_url
 from django.contrib.messages import constants as messages
 import dj_database_url  # <-- assure-toi qu'il est dans requirements.txt
 
@@ -70,10 +71,10 @@ DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv(
             "DATABASE_URL",
-            "postgres://olympique_user:MotDePasse_App14!@127.0.0.1:5432/tickets_olympique_bah"
+            "postgres://olympique_user:MotDePasse_App14!@127.0.0.1:5432/tickets_olympique_bah"  # fallback dev local
         ),
         conn_max_age=600,
-        ssl_require=bool(os.getenv("DYNO")),  # DYNO est défini sur Heroku
+        ssl_require=bool(os.getenv("DYNO")),  # True sur Heroku
     )
 }
 
