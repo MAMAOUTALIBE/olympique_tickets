@@ -117,6 +117,15 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
 
 # --------- Stripe (via .env / config vars) ---------
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY_TEST", "secret")
-STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY_TEST", "public")
+# Accept both prod-style and *_TEST env vars so local .env.example works ootb
+STRIPE_SECRET_KEY = (
+    os.getenv("STRIPE_SECRET_KEY")
+    or os.getenv("STRIPE_SECRET_KEY_TEST")
+    or "secret"
+)
+STRIPE_PUBLIC_KEY = (
+    os.getenv("STRIPE_PUBLIC_KEY")
+    or os.getenv("STRIPE_PUBLIC_KEY_TEST")
+    or "public"
+)
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "secret")
