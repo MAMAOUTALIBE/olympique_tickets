@@ -3,8 +3,10 @@ from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
 import dj_database_url  # <-- assure-toi qu'il est dans requirements.txt
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")  # <- important: charge le .env local
 
 # --------- Secrets & mode ---------
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe")  # ⚠️ mettre une vraie clé en prod via config vars
