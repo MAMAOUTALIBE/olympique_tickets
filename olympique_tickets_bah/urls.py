@@ -8,9 +8,10 @@ from django.contrib import admin
 
 
 urlpatterns = [
-    path("djangoAdmin/", admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("djangoAdmin/", admin.site.urls),  # alias legacy pour compatibilité si besoin
     path('',include('tickets_bah.urls')), #inclure les urle de lapplication tickets
-    path('admin/', include('appAdmin.urls')),
+    path('dashboard/', include('appAdmin.urls')),
 ]
 
 if settings.DEBUG:

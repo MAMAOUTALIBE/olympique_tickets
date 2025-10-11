@@ -4,7 +4,7 @@ from django.urls import path
 from appAdmin.views import SportPageView
 
 urlpatterns = [
-    path('dashboard/', views.dashboard, name="dashboard"),
+    path('', views.dashboard, name="dashboard"),
 
     path('offres/', views.offres, name="offres.index"),
     path('offres/create', views.createOffres, name="offres.create"),    
