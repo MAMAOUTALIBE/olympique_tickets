@@ -215,8 +215,9 @@
 .footer-elegant {
     background: linear-gradient(135deg, #0066cc 0%, #004d99 100%);
     padding: 2rem 0;
-    margin-top: 5rem;
     color: #ffffff;
+    width: 100%;
+    margin-top: auto;
 }
 
 .footer-elegant p {

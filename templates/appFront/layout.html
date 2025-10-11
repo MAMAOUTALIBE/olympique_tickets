@@ -5,22 +5,25 @@
   {% include 'appFront/include/head.html' %}
   <!-- end head -->
   <body>
-    <!-- header -->
-    {% include 'appFront/include/header.html' %}
-    <!-- end header -->
+    <div class="page-wrapper">
+      <!-- header -->
+      {% include 'appFront/include/header.html' %}
+      <!-- end header -->
 
-    <!-- Contenu -->
-    {% block content %}{% endblock %}
-    <!-- End Contenu -->
+      <!-- Contenu -->
+      <main class="page-content">
+        {% block content %}{% endblock %}
+      </main>
+      <!-- End Contenu -->
 
-    <!-- footer -->
-    {% include 'appFront/include/footer.html' %}
-    <!-- end footer -->
+      <!-- footer -->
+      {% include 'appFront/include/footer.html' %}
+      <!-- end footer -->
+    </div>
 
     <!-- scriptJS -->
     {% include 'appFront/include/scriptJS.html' %}
     <!-- end scriptJS -->
-    {% include 'appFront/include/base.html' %}
 
     {% block customScript %}{% endblock customScript %}
   </body>
