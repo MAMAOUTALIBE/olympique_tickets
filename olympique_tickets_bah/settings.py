@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import os
+import sys
 from django.contrib.messages import constants as messages
 import dj_database_url  # <-- assure-toi qu'il est dans requirements.txt
 from dotenv import load_dotenv
@@ -76,6 +77,18 @@ DATABASES = {
         ssl_require=bool(os.getenv("DYNO")),  # True sur Heroku
     )
 }
+
+USE_SQLITE_FOR_TESTS = os.getenv("USE_SQLITE_FOR_TESTS", "").lower() in {"1", "true", "yes"} or "test" in sys.argv
+
+if USE_SQLITE_FOR_TESTS:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "test_db.sqlite3",
+        }
+    }
+
+TEST_RUNNER = "olympique_tickets_bah.test_runner.DefaultAppDiscoverRunner"
 
 # --------- Static / Media ---------
 STATIC_URL = "/static/"
