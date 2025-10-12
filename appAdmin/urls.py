@@ -1,7 +1,6 @@
 from django.urls import path, include
 from appAdmin import views
 from django.urls import path
-from appAdmin.views import SportPageView
 
 urlpatterns = [
     path('', views.dashboard, name="dashboard"),
@@ -22,6 +21,7 @@ urlpatterns = [
 
     path('utilisateurs/', views.utilisateurs, name="utilisateurs.index"),
     path('utilisateurs/<int:id>/delete', views.deleteUtilisateurs, name="utilisateurs.delete"),
-    path('sports/', SportPageView.as_view(), name='admin_sports'),
+    path('sports/', views.sports, name="admin_sports"),
+    path('sports/<int:id>/delete', views.deleteSport, name="admin_sports.delete"),
 
 ]

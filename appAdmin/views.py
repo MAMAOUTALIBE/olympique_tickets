@@ -1,18 +1,17 @@
 from django.shortcuts import render, redirect
 from tickets_bah.core.permissions import is_super_admin, is_admin, admin_is_authenticate
 from django.contrib.auth.decorators import user_passes_test
-from tickets_bah.models import Utilisateur, Offre, Reservation, Panier
+from tickets_bah.models import Utilisateur, Offre, Reservation, Panier, SportEvent
 from django.views.decorators.csrf import csrf_exempt
 import sweetify
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from appAdmin.forms import OffresForm
+from appAdmin.forms import OffresForm, SportEventForm
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from tickets_bah.constance import user_role
-from django.views.generic import TemplateView
 
 
 # Create your views here.
@@ -228,8 +227,47 @@ def deleteUtilisateurs(request, id):
         sweetify.error(request, f"Erreur lors de la suppression de l'utilisateur : {str(e)}", button='Fermer', timer=5000)    
     return redirect("utilisateurs.index")
 
-# vue page sport
-class SportPageView(TemplateView):
-    template_name = 'admin/sports.html'
+
+@user_passes_test(admin_is_authenticate, login_url="/login")
+def sports(request):
+    sports = SportEvent.objects.all().order_by("nom")
+    if request.method == "POST":
+        form = SportEventForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            sweetify.success(request, "Épreuve enregistrée avec succès !", button='Fermer', timer=3000)
+            return redirect("admin_sports")
+        else:
+            errors = " ".join([f"{field}: {', '.join(messages)}" for field, messages in form.errors.items()])
+            sweetify.error(request, f"Erreur lors de la création de l'épreuve : {errors}", button='Fermer', timer=5000)
+    else:
+        form = SportEventForm()
+
+    context = {
+        "sports": sports,
+        "form": form,
+        "request": request,
+        "parent": '',
+        "child": 'sports',
+        "title": 'Sports',
+        "subTitle": 'Sports',
+        "dataTitle": "sports",
+        "dataSubTitle": "sport",
+    }
+    return render(request=request, template_name="admin/sports.html", context=context)
 
 
+@user_passes_test(admin_is_authenticate, login_url="/login")
+def deleteSport(request, id):
+    if request.method != "POST":
+        return redirect("admin_sports")
+
+    try:
+        sport = SportEvent.objects.get(id=id)
+        sport.delete()
+        sweetify.success(request, "Épreuve supprimée avec succès !", button='Fermer', timer=3000)
+    except SportEvent.DoesNotExist:
+        sweetify.error(request, "Erreur : Cette épreuve n'existe pas.", button='Fermer', timer=5000)
+    except Exception as e:
+        sweetify.error(request, f"Erreur lors de la suppression de l'épreuve : {str(e)}", button='Fermer', timer=5000)
+    return redirect("admin_sports")

@@ -1,88 +1,154 @@
 {% extends "appAdmin/layout.html" %}
 {% load static %}
 
-{% block title %}Sports{% endblock %}
-{% block subTitle %}Catalogue des sports olympiques{% endblock %}
+{% block title %}{{ title }}{% endblock %}
+{% block subTitle %}{{ subTitle }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="card-title mb-0">Liste des sports</h5>
-        <input id="search" type="text" class="form-control" style="max-width: 320px;"
-               placeholder="Rechercher un sport…" onkeyup="filtrerSports()">
+<section class="section dashboard">
+  <div class="row">
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Ajouter une épreuve</h5>
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label" for="id_nom">Nom de l'épreuve</label>
+              {{ form.nom }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="id_discipline">Discipline</label>
+              {{ form.discipline }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="id_lieu">Lieu</label>
+              {{ form.lieu }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="id_date">Date & heure</label>
+              {{ form.date }}
+              {% if form.date.help_text %}
+                <div class="form-text">{{ form.date.help_text }}</div>
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="id_description">Description</label>
+              {{ form.description }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="id_image">Illustration (optionnel)</label>
+              {{ form.image }}
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-plus-circle"></i> Ajouter l'épreuve
+            </button>
+          </form>
+        </div>
       </div>
+    </div>
 
-      <div id="sports-list" class="row g-3">
-        <!-- Athlétisme -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="{% static 'tickets/images/athletisme.jpg' %}" alt="Athlétisme">
-            <div class="card-body">
-              <h6 class="card-title mb-1">Athlétisme</h6>
-              <p class="text-muted small mb-0">Courses, sauts et lancers.</p>
-            </div>
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="card-title mb-0">Épreuves enregistrées</h5>
+            <input id="search" type="text" class="form-control" style="max-width: 320px;"
+                   placeholder="Rechercher..." oninput="filtrerSports()">
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle" id="sportsTable">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-center">#</th>
+                  <th>Épreuve</th>
+                  <th>Discipline</th>
+                  <th>Lieu</th>
+                  <th>Date</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sports-list">
+                {% for sport in sports %}
+                  <tr class="sport-row">
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        {% if sport.image %}
+                          <img src="{{ sport.image.url }}" alt="{{ sport.nom }}" width="48" height="48" class="rounded object-fit-cover">
+                        {% else %}
+                          <span class="badge bg-secondary">Aucune image</span>
+                        {% endif %}
+                        <div>
+                          <p class="mb-0 fw-semibold">{{ sport.nom }}</p>
+                          {% if sport.description %}
+                            <small class="text-muted">{{ sport.description|truncatechars:80 }}</small>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ sport.discipline|default:"—" }}</td>
+                    <td>{{ sport.lieu|default:"—" }}</td>
+                    <td>
+                      {% if sport.date %}
+                        {{ sport.date|date:"d/m/Y H:i" }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSportModal_{{ sport.id }}">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <div class="modal fade" id="deleteSportModal_{{ sport.id }}" tabindex="-1" aria-labelledby="deleteSportLabel_{{ sport.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5" id="deleteSportLabel_{{ sport.id }}">Supprimer {{ sport.nom }}</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                        </div>
+                        <div class="modal-body">
+                          Êtes-vous sûr de vouloir supprimer cette épreuve ?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                          <form method="post" action="{% url 'admin_sports.delete' sport.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      Aucune épreuve enregistrée pour le moment.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <!-- Natation -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="{% static 'tickets/images/natation.jpg' %}" alt="Natation">
-            <div class="card-body">
-              <h6 class="card-title mb-1">Natation</h6>
-              <p class="text-muted small mb-0">Piscine & eau libre.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Football -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="{% static 'tickets/images/football.jpg' %}" alt="Football">
-            <div class="card-body">
-              <h6 class="card-title mb-1">Football</h6>
-              <p class="text-muted small mb-0">Tournoi M/F.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Judo -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="{% static 'tickets/images/judo.jpg' %}" alt="Judo">
-            <div class="card-body">
-              <h6 class="card-title mb-1">Judo</h6>
-              <p class="text-muted small mb-0">Arts martiaux.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gymnastique -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 sport-card">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="{% static 'tickets/images/gymnastique.jpg' %}" alt="Gymnastique">
-            <div class="card-body">
-              <h6 class="card-title mb-1">Gymnastique</h6>
-              <p class="text-muted small mb-0">Grâce & précision.</p>
-            </div>
-          </div>
-        </div>
-      </div><!-- /row -->
+      </div>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}
 
 {% block customScript %}
 <script>
-function filtrerSports() {
-  const q = document.getElementById('search').value.toLowerCase();
-  document.querySelectorAll('#sports-list .sport-card').forEach(card => {
-    const title = card.querySelector('.card-title').textContent.toLowerCase();
-    card.style.display = title.includes(q) ? '' : 'none';
-  });
-}
+  function filtrerSports() {
+    const query = (document.getElementById('search').value || '').toLowerCase();
+    document.querySelectorAll('#sports-list .sport-row').forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(query) ? '' : 'none';
+    });
+  }
 </script>
 {% endblock %}

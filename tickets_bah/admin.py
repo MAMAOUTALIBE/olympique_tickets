@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Utilisateur, Offre, Reservation, UtilisateurPayment
+from .models import Utilisateur, Offre, Reservation, UtilisateurPayment, SportEvent
 from .views import panier
 
 
@@ -24,6 +24,6 @@ admin.site.register(Offre, OffreAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 
 admin.site.register(UtilisateurPayment)
-
+admin.site.register(SportEvent)
 
 

@@ -1,37 +1,110 @@
 {% extends "appFront/layout.html" %}
 {% load static %}
 
-{% block title %}Sports - JO Paris 2024{% endblock %}
+{% block title %}Épreuves et Sports - JO Paris 2024{% endblock %}
 
 {% block content %}
-<h2>Liste des Sports Olympiques</h2>
-
-<div class="search-filter">
-  <input type="text" id="search" placeholder="Rechercher un sport..." onkeyup="filtrerSports()">
-</div>
-
-<div class="sports-grid" id="sports-list">
-  <div class="sport-card">
-    <img src="{% static 'admin/assets/img/athletisme.png' %}" alt="Athlétisme">
-    <h3>Athlétisme</h3>
-    <p>Courses, sauts et lancers emblématiques des Jeux.</p>
+<section class="sports-page">
+  <div class="sports-page__header">
+    <h1>Explorer les épreuves olympiques</h1>
+    <p>
+      Retrouvez en un clin d’œil les principales épreuves des Jeux de Paris 2024. Filtrez par discipline,
+      site ou mot-clé pour préparer votre programme.
+    </p>
   </div>
-  <div class="sport-card">
-    <img src="{% static 'admin/assets/img/natation.png' %}" alt="Natation">
-    <h3>Natation</h3>
-    <p>Épreuves en piscine et en eau libre.</p>
-  </div>
-  <!-- autres cartes… -->
-</div>
 
+  <div class="search-filter">
+    <label for="search">Rechercher une épreuve</label>
+    <div class="search-filter__input">
+      <input
+        type="search"
+        id="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="Ex. athlétisme, Centre Aquatique, marathon…"
+        aria-label="Rechercher une épreuve olympique"
+      >
+    </div>
+  </div>
+
+  <div
+    id="sports-list"
+    class="sports-grid"
+    data-empty-message="Aucune épreuve ne correspond à votre recherche."
+  >
+    {% for event in events %}
+      <article
+        class="sport-card"
+        data-keywords="{{ event.nom|default_if_none:''|lower }} {{ event.discipline|default_if_none:''|lower }} {{ event.lieu|default_if_none:''|lower }}"
+      >
+        <div class="sport-card__media">
+          {% if event.image %}
+            <img src="{{ event.image.url }}" alt="{{ event.nom }}">
+          {% else %}
+            <img src="{% static 'admin/assets/img/not-found.svg' %}" alt="{{ event.nom }}">
+          {% endif %}
+        </div>
+        <div class="sport-card__body">
+          <h3>{{ event.nom }}</h3>
+          <p class="sport-card__meta">
+            {% if event.discipline %}{{ event.discipline }}{% endif %}
+            {% if event.discipline and event.lieu %} • {% endif %}
+            {% if event.lieu %}{{ event.lieu }}{% endif %}
+          </p>
+          {% if event.description %}
+            <p>{{ event.description }}</p>
+          {% endif %}
+          {% if event.date %}
+            <p class="sport-card__date">{{ event.date|date:"d/m/Y H:i" }}</p>
+          {% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <p class="sports-empty-message">Aucune épreuve ne correspond à votre recherche.</p>
+    {% endfor %}
+  </div>
+
+  <p id="sports-empty" class="sports-empty-message" hidden>
+    Aucune épreuve ne correspond à votre recherche.
+  </p>
+</section>
+{% endblock %}
+
+{% block customScript %}
+{{ block.super }}
 <script>
-function filtrerSports() {
-  const input = document.getElementById("search").value.toLowerCase();
-  const cards = document.querySelectorAll(".sport-card");
-  cards.forEach(card => {
-    const title = card.querySelector("h3").textContent.toLowerCase();
-    card.style.display = title.includes(input) ? "block" : "none";
-  });
-}
+  (function () {
+    const searchInput = document.getElementById('search');
+    const cards = Array.from(document.querySelectorAll('.sport-card'));
+    const emptyMessage = document.getElementById('sports-empty');
+
+    function applyFilter() {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const keywords = card.dataset.keywords || '';
+        const match = keywords.includes(query);
+        card.style.display = match ? '' : 'none';
+        if (match) {
+          visibleCount += 1;
+        }
+      });
+
+      if (emptyMessage) {
+        emptyMessage.hidden = visibleCount !== 0;
+      }
+    }
+
+    if (cards.length === 0 && emptyMessage) {
+      emptyMessage.hidden = false;
+      return;
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilter);
+      applyFilter();
+    }
+  })();
 </script>
 {% endblock %}

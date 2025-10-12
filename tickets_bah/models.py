@@ -135,3 +135,19 @@ class UtilisateurPayment(models.Model):
         return f"{self.utilisateur.nom} {self.utilisateur.prenom} - {self.offre.nom} - Paid: {self.has_paid}"
 
 
+class SportEvent(models.Model):
+    nom = models.CharField(max_length=150)
+    discipline = models.CharField(max_length=150, blank=True)
+    lieu = models.CharField(max_length=150, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="sports", blank=True, null=True)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True)
+    updatedAt = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        ordering = ["-createdAt"]
+
+    def __str__(self):
+        return self.nom
+

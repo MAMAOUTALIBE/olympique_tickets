@@ -2,7 +2,7 @@ from io import BytesIO
 from math import frexp
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from .models import Utilisateur, Offre, Reservation, Panier, UtilisateurPayment
+from .models import Utilisateur, Offre, Reservation, Panier, UtilisateurPayment, SportEvent
 from .forms import RegisterForm, LoginForm
 from django.contrib.auth import authenticate, login, logout
 import qrcode
@@ -27,9 +27,9 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from django.contrib.staticfiles import finders
-from django.conf import settings
 import os
 from django.shortcuts import render
+from django.db.models import Q
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -343,4 +343,19 @@ def ebillet_pdf(request, reservation_id):
     return response
 
 def sports(request):
-    return render(request, 'tickets_bah/sports.html')
+    query = request.GET.get("q", "").strip()
+    events = SportEvent.objects.all()
+
+    if query:
+        events = events.filter(
+            Q(nom__icontains=query)
+            | Q(discipline__icontains=query)
+            | Q(lieu__icontains=query)
+        )
+
+    context = {
+        "events": events,
+        "query": query,
+        "events_count": events.count(),
+    }
+    return render(request, 'tickets_bah/sports.html', context)

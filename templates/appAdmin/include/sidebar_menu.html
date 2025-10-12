@@ -48,6 +48,13 @@
         </li><!-- End Contact Page Nav -->
 
         <li class="nav-item">
+            <a class="nav-link {% if child == 'sports' %}{% else %}collapsed{% endif %}" href="{% url 'admin_sports' %}">
+                <i class="bi bi-trophy-fill"></i>
+                <span>Sports</span>
+            </a>
+        </li><!-- End Sports Page Nav -->
+
+        <li class="nav-item">
             <a class="nav-link collapsed" href="{% url 'logout' %}">
                 <i class="bi bi-box-arrow-right "></i>
                 <span>Se déconnecter</span>

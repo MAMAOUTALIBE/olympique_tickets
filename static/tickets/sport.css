@@ -9,10 +9,10 @@
 }
 
 #search {
-    padding: 10px;
-    width: 60%;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+    padding: 0.8rem 1rem;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #ced4da;
 }
 
 .sports-grid {
@@ -43,4 +43,113 @@
 .sport-card h3 {
     margin: 10px 0;
     color: #0057b7;
+}
+
+.sports-page {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3rem 1rem 4rem;
+}
+
+.sports-page__header {
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.sports-page__header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    margin-bottom: 0.75rem;
+    color: #003366;
+}
+
+.sports-page__header p {
+    color: #495057;
+    max-width: 720px;
+}
+
+.search-filter form,
+.search-filter {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+
+.search-filter label {
+    font-weight: 600;
+    color: #003366;
+    text-align: left;
+}
+
+.search-filter__input {
+    position: relative;
+}
+
+.search-filter__input input {
+    padding: 0.8rem 1rem;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-size: 1rem;
+}
+
+.search-filter__input input:focus {
+    border-color: #0057b7;
+    box-shadow: 0 0 0 0.2rem rgba(0, 87, 183, 0.15);
+    outline: none;
+}
+
+.sport-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sport-card__media {
+    background: #f8f9fa;
+}
+
+.sport-card__body {
+    padding: 1rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    text-align: left;
+}
+
+.sport-card__meta {
+    font-size: 0.95rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.sport-card__date {
+    margin-top: auto;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0057b7;
+}
+
+.sports-empty-message {
+    margin-top: 2rem;
+    text-align: center;
+    font-weight: 600;
+    color: #9a0020;
+}
+
+@media (max-width: 768px) {
+    #search,
+    .search-filter__input input {
+        width: 100%;
+    }
+
+    .sports-page__header {
+        text-align: center;
+    }
+
+    .sports-page__header p {
+        margin: 0 auto;
+    }
 }
