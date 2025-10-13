@@ -6,15 +6,8 @@
       <img src="{% static 'admin/assets/img/anneaux.png' %}" alt="Anneaux olympiques" class="navbar-logo">
       <span class="brand-text">Jeux Olympiques</span>
     </a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
@@ -23,14 +16,14 @@
           <a class="nav-link active" href="/">Accueil</a>
         </li>
         <li class="nav-item">
-        {% if request.user.is_authenticated %}
-        <a class="nav-link btn btn-outline-light" href="{% url 'logout' %}">Déconnexion</a>
-        {% else %}
-        <a class="nav-link btn btn-outline-light" href="{% url 'login' %}">Connexion</a>
-        {% endif %}
+          {% if request.user.is_authenticated %}
+          <a class="nav-link" href="{% url 'logout' %}">Déconnexion</a>
+          {% else %}
+          <a class="nav-link" href="{% url 'login' %}">Connexion</a>
+          {% endif %}
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'sports' %}">Sports</a>
+          <a class="nav-link" href="{% url 'sports' %}">Epreuves</a>
         </li>
       </ul>
     </div>

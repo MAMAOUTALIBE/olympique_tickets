@@ -1,6 +1,6 @@
 /* Navbar élégante */
 .navbar-elegant {
-    background: linear-gradient(135deg, #87ceeb 0%, #5aa7d6 100%);
+    background: #00FFFF;
     box-shadow: 0 2px 15px rgba(90, 167, 214, 0.2);
     padding: 1.2rem 0;
     position: sticky;
@@ -50,6 +50,34 @@
     color: inherit;
 }
 
+.navbar-nav .nav-link {
+    background-color: transparent !important;
+    border: none !important;
+    color: #004c66 !important;
+    border-radius: 0;
+    padding: 0.5rem 1rem;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+    color: #002f40 !important;
+}
+
+.navbar-nav .nav-link.active {
+    color: #002f40 !important;
+    background-color: transparent !important;
+}
+
+.navbar-nav .nav-item {
+    background-color: transparent !important;
+    border: none !important;
+    margin: 0;
+    padding: 0;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
 /* Hero Section */
 .hero-section {
     min-height: 85vh;
@@ -58,7 +86,7 @@
     justify-content: center;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(to bottom, #ffffff 0%, #f0f7ff 100%);
+    background: none;
 }
 
 /* Anneaux olympiques subtils */
@@ -230,7 +258,7 @@
 
 /* Footer élégant */
 .footer-elegant {
-    background: linear-gradient(135deg, #87ceeb 0%, #5aa7d6 100%);
+    background: #00FFFF;
     padding: 2rem 0;
     color: #ffffff;
     width: 100%;
@@ -260,71 +288,20 @@
     text-align: center;
 }
 
-/* Particules bleues subtiles */
-.particles {
+/* Image de fond pour la section Hero */
+.hero-background {
     position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: flex;
+}
+
+.hero-background img {
     width: 100%;
     height: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.particle {
-    position: absolute;
-    background: #0066cc;
-    border-radius: 50%;
-    opacity: 0.1;
-    animation: particleFloat 20s infinite;
-}
-
-@keyframes particleFloat {
-    0% {
-        transform: translateY(100vh) rotate(0deg);
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 0.1;
-    }
-
-    90% {
-        opacity: 0.1;
-    }
-
-    100% {
-        transform: translateY(-100px) rotate(360deg);
-        opacity: 0;
-    }
-}
-
-.particle:nth-child(1) {
-    left: 15%;
-    width: 8px;
-    height: 8px;
-    animation-delay: 0s;
-}
-
-.particle:nth-child(2) {
-    left: 40%;
-    width: 5px;
-    height: 5px;
-    animation-delay: 3s;
-}
-
-.particle:nth-child(3) {
-    left: 65%;
-    width: 6px;
-    height: 6px;
-    animation-delay: 6s;
-}
-
-.particle:nth-child(4) {
-    left: 85%;
-    width: 7px;
-    height: 7px;
-    animation-delay: 9s;
+    object-fit: cover;
+    filter: brightness(0.95);
 }
 
 /* Effets décoratifs bleus */

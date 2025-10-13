@@ -15,6 +15,12 @@ body {
     min-height: 100dvh;
 }
 
+p,
+ul,
+li {
+    color: #000000;
+}
+
 .page-wrapper {
     min-height: 100vh;
     min-height: 100dvh;
@@ -31,7 +37,7 @@ body {
 
 a {
     text-decoration: none;
-    color: #007bff;
+    color: aqua;
 }
 
 form {
@@ -45,7 +51,7 @@ form {
 }
 
 button {
-    background-color: #007bff;
+    background-color: aqua;
     color: #fff;
     border: none;
     padding: 10px 20px;

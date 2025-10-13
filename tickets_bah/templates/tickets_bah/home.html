@@ -1,16 +1,13 @@
 {% extends 'appFront/layout.html' %}
 {% load static %}
 {% block content %}
-<!-- Particules bleues subtiles -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-
     <!-- Section Hero -->
     <div class="hero-section">
+        <!-- Image de fond -->
+        <div class="hero-background">
+            <img src="{% static 'admin/assets/img/JOA.png' %}" alt="Illustration Jeux Olympiques">
+        </div>
+
         <!-- Accents décoratifs bleus -->
         <div class="blue-accent accent-1"></div>
         <div class="blue-accent accent-2"></div>
