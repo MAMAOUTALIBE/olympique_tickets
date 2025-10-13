@@ -1,0 +1,27 @@
+{% extends 'appFront/layout.html' %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="bi bi-envelope-check"></i>
+            </div>
+            <h1 class="login-title">Vérifiez votre boîte mail</h1>
+            <p class="login-subtitle">
+                Un lien de confirmation vient d'être envoyé à <strong>{{ user_email }}</strong>. Cliquez dessus, puis saisissez le code généré par votre application d'authentification.
+            </p>
+        </div>
+        <div class="text-center">
+            <p class="mb-4">
+                Ce lien expire dans {{ expiration_minutes }} minutes. Pensez à vérifier vos spams si vous ne voyez pas l'email.
+            </p>
+            <a href="{% url 'login' %}" class="btn btn-login">
+                <i class="bi bi-arrow-left me-2"></i> Retour à la connexion
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block customScript %}{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'appFront/layout.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-5">
+      <div class="card shadow border-0">
+        <div class="card-body p-4">
+          <h2 class="text-center mb-3">Vérification en deux étapes</h2>
+          <p class="text-muted text-center mb-4">
+            Saisissez le code à 6 chiffres généré par votre application d’authentification pour finaliser la connexion.
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="code" class="form-label">Code TOTP</label>
+              <input type="text" name="code" id="code" class="form-control" required pattern="\d{6}" maxlength="6" inputmode="numeric" placeholder="123456">
+            </div>
+            <button type="submit" class="btn btn-elegant w-100">Valider</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'appFront/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow border-0">
+        <div class="card-body text-center p-4">
+          <h2 class="mb-3">Activez la vérification en deux étapes</h2>
+          <p class="mb-4">
+            Scannez ce QR code avec votre application d’authentification (Google Authenticator, Authy, 1Password, …),
+            puis saisissez le code à 6 chiffres généré pour confirmer l’activation.
+          </p>
+          <div class="mb-4">
+            <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code d'activation" class="img-fluid">
+          </div>
+          <p class="text-muted">Vous pouvez aussi saisir manuellement ce secret dans votre application&nbsp;:</p>
+          <p class="fw-semibold">{{ secret }}</p>
+          <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3 text-start">
+              <label for="code" class="form-label">Code à 6 chiffres</label>
+              <input type="text" name="code" id="code" class="form-control" required pattern="\d{6}" maxlength="6" inputmode="numeric" placeholder="123456">
+            </div>
+            <button type="submit" class="btn btn-elegant w-100">Valider et activer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

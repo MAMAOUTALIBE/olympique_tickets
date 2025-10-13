@@ -118,6 +118,21 @@ MESSAGE_TAGS = {
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "tickets_bah.Utilisateur"
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
 
 # --------- E-mail (ne PAS hardcoder) ---------
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.filebased.EmailBackend")
@@ -142,3 +157,8 @@ STRIPE_PUBLIC_KEY = (
     or "public"
 )
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "secret")
+
+# --------- Authentification email 2FA ---------
+LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES = int(
+    os.getenv("LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES", "10")
+)

@@ -1,14 +1,16 @@
 from unicodedata import decimal
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager,PermissionsMixin
+from django.utils import timezone
 from django.utils.timezone import now 
 from io import BytesIO
 from math import frexp
 import qrcode
 from django.core.files.base import ContentFile
-
-
 
 ROLES = (
     ("super-admin", "super-admin"),
@@ -44,6 +46,10 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False, null=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True)
     updatedAt = models.DateTimeField(auto_now=True, null=True)
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=64, null=True, blank=True)
+    totp_secret = models.CharField(max_length=32, null=True, blank=True)
+    is_totp_enabled = models.BooleanField(default=False)
 
     objects = UtilisateurManager()
 
@@ -151,3 +157,24 @@ class SportEvent(models.Model):
     def __str__(self):
         return self.nom
 
+
+class LoginVerificationToken(models.Model):
+    utilisateur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name="login_tokens",
+    )
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def is_expired(self):
+        expiration_minutes = getattr(
+            settings,
+            "LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES",
+            10,
+        )
+        return timezone.now() > self.created_at + timedelta(minutes=expiration_minutes)

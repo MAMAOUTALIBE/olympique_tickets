@@ -1,37 +1,48 @@
-from io import BytesIO
-from math import frexp
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from .models import Utilisateur, Offre, Reservation, Panier, UtilisateurPayment, SportEvent
-from .forms import RegisterForm, LoginForm
-from django.contrib.auth import authenticate, login, logout
-import qrcode
-from django.core.files.base import ContentFile
-from django.contrib.auth.hashers import check_password
-from django.core.mail import send_mail
-from django.conf import settings
-import uuid
-from .utils import envoyer_confirmation_reservation  # Import depuis utils.py
-from tickets_bah.core.permissions import is_super_admin, is_admin, user_is_authenticate
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.hashers import make_password
-import sweetify
-from django.urls import reverse
-from django.contrib import messages
-from django.views.decorators.csrf import csrf_exempt
-import stripe
+import base64
 import json
 import logging
-
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from django.contrib.staticfiles import finders
 import os
-from django.shortcuts import render
+import ssl
+import uuid
+from io import BytesIO
+from math import frexp
+
+import pyotp
+import qrcode
+import stripe
+import sweetify
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.staticfiles import finders
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.mail import send_mail
 from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.test.utils import override_settings
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from xhtml2pdf import pisa
+
+from .forms import LoginForm, RegisterForm, StyledPasswordResetForm
+from .models import (LoginVerificationToken, Offre, Panier, Reservation,
+                     SportEvent, Utilisateur, UtilisateurPayment)
+from .utils import envoyer_confirmation_reservation
+from tickets_bah.core.permissions import (is_admin, is_super_admin,
+                                          user_is_authenticate)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES = getattr(
+    settings, "LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES", 10
+)
 
 
 # Create your views here.(vue pour la page d'acceuil)
@@ -39,6 +50,37 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 def home(request):
     return render(request, 'tickets_bah/home.html')
 
+
+def _send_login_verification_email(request, utilisateur):
+    """Envoie un lien de confirmation pour une connexion MFA par email."""
+    LoginVerificationToken.objects.filter(utilisateur=utilisateur, used=False).update(used=True)
+
+    token = LoginVerificationToken.objects.create(
+        utilisateur=utilisateur,
+        token=uuid.uuid4().hex,
+    )
+
+    confirmation_url = request.build_absolute_uri(
+        reverse("login_email_confirm", args=[token.token])
+    )
+    context = {
+        "utilisateur": utilisateur,
+        "confirmation_url": confirmation_url,
+        "expiration_minutes": LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES,
+    }
+    subject = "Confirmez votre connexion"
+    message = render_to_string("tickets_bah/login_email_verification_email.txt", context)
+
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [utilisateur.email])
+    except ssl.SSLCertVerificationError:
+        with override_settings(
+            EMAIL_BACKEND="django.core.mail.backends.filebased.EmailBackend",
+            EMAIL_FILE_PATH=str(settings.EMAIL_FILE_PATH),
+        ):
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [utilisateur.email])
+
+    return token
 
 
 #Poteger les pages necessitant une authentification
@@ -76,22 +118,48 @@ def register(request):
             nom = form.cleaned_data.get("nom")
             prenom = form.cleaned_data.get("prenom")
             email = form.cleaned_data.get("email")
-            password = make_password(form.cleaned_data.get("password"))
-            cle_utilisateur = str(uuid.uuid4())[:12]
-            utilisateur = Utilisateur.objects.create(
-                nom=nom,
-                prenom=prenom,
-                email=email,
-                password=password,
-                cle_utilisateur=cle_utilisateur
-            )
-            utilisateur.save()
-            sweetify.success(request, "Inscription effectuée avec succès !", button='Ok', timer=3000)
-            return redirect("login")
+            raw_password = form.cleaned_data.get("password")
+
+            try:
+                validate_password(raw_password, user=Utilisateur(email=email))
+            except ValidationError as exc:
+                for message in exc.messages:
+                    form.add_error("password", message)
+                sweetify.error(
+                    request,
+                    "Mot de passe trop faible, merci de respecter les exigences de sécurité.",
+                    button="Ok",
+                    timer=5000,
+                )
+            else:
+                cle_utilisateur = str(uuid.uuid4())[:12]
+                utilisateur = Utilisateur.objects.create_user(
+                    nom=nom,
+                    prenom=prenom,
+                    email=email,
+                    password=raw_password,
+                    cle_utilisateur=cle_utilisateur,
+                )
+                utilisateur.is_email_verified = True
+                utilisateur.email_verification_token = None
+                utilisateur.is_totp_enabled = False
+                utilisateur.totp_secret = None
+                utilisateur.save(update_fields=[
+                    "is_email_verified",
+                    "email_verification_token",
+                    "is_totp_enabled",
+                    "totp_secret",
+                ])
+                sweetify.success(
+                    request,
+                    "Inscription effectuée ! Connectez-vous pour finaliser la configuration.",
+                    button="Ok",
+                    timer=5000,
+                )
+                return redirect("login")
         else:
             errors = " ".join([f"{field}: {', '.join(messages)}" for field, messages in form.errors.items()])
             sweetify.error(request, f"Inscription échouée ! : {errors}", button='Ok', timer=5000)
-            return redirect("offres.create")
     else:
         form = RegisterForm()
     return render(request, 'tickets_bah/register.html', {'form': form})
@@ -109,22 +177,236 @@ def customLogin(request):
             user = authenticate(request, username=email, password=password)
 
             if user is not None:
-                login(request, user)  # Connexion de l'utilisateur
-                if user.default_role == "super-admin":
-                    return redirect("dashboard")
-                else:
-                    return redirect("home")
+                redirect_target = "dashboard" if user.default_role == "super-admin" else "home"
+                request.session["post_login_redirect"] = redirect_target
+                request.session["pending_email_user_id"] = user.id
+                _send_login_verification_email(request, user)
+                sweetify.info(
+                    request,
+                    "Confirmez votre connexion via le lien envoyé par email.",
+                    button="Ok",
+                    timer=5000,
+                )
+                return redirect("login_email_sent")
             else:
-                return HttpResponse("Email ou mot de passe incorrect")
+                sweetify.error(request, "Email ou mot de passe incorrect.", button="Ok", timer=4000)
 
     else:
         form = LoginForm()
 
     return render(request, 'tickets_bah/login.html', {'form': form})
 
+
+def login_email_sent(request):
+    pending_user_id = request.session.get("pending_email_user_id")
+    if not pending_user_id:
+        sweetify.warning(request, "Veuillez vous authentifier d'abord.", button="Ok")
+        return redirect("login")
+
+    utilisateur = Utilisateur.objects.filter(id=pending_user_id).first()
+    context = {
+        "user_email": utilisateur.email if utilisateur else "",
+        "expiration_minutes": LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES,
+    }
+    return render(request, "tickets_bah/login_email_sent.html", context)
+
+
+def login_email_confirm(request, token):
+    try:
+        login_token = LoginVerificationToken.objects.select_related("utilisateur").get(token=token)
+    except LoginVerificationToken.DoesNotExist:
+        sweetify.error(request, "Lien de confirmation invalide.", button="Ok", timer=5000)
+        return redirect("login")
+
+    if login_token.used:
+        sweetify.error(request, "Ce lien a déjà été utilisé.", button="Ok", timer=5000)
+        return redirect("login")
+
+    if login_token.is_expired():
+        login_token.used = True
+        login_token.save(update_fields=["used"])
+        sweetify.error(
+            request,
+            "Le lien de confirmation a expiré. Veuillez vous reconnecter.",
+            button="Ok",
+            timer=5000,
+        )
+        return redirect("login")
+
+    login_token.used = True
+    login_token.save(update_fields=["used"])
+
+    utilisateur = login_token.utilisateur
+    pending_user_id = request.session.pop("pending_email_user_id", None)
+    if pending_user_id and pending_user_id != utilisateur.id:
+        sweetify.error(
+            request,
+            "Cette confirmation ne correspond pas à la session en cours.",
+            button="Ok",
+            timer=5000,
+        )
+        return redirect("login")
+
+    request.session["mfa_user_id"] = utilisateur.id
+
+    if utilisateur.is_totp_enabled and utilisateur.totp_secret:
+        sweetify.success(
+            request,
+            "Email confirmé. Entrez le code généré par votre application d'authentification.",
+            button="Ok",
+            timer=5000,
+        )
+        return redirect("mfa_verify")
+
+    sweetify.info(
+        request,
+        "Email confirmé. Configurez maintenant votre code de sécurité via l'application d'authentification.",
+        button="Ok",
+        timer=6000,
+    )
+    return redirect("mfa_setup")
+
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = "tickets_bah/password_reset.html"
+    email_template_name = "tickets_bah/password_reset_email.html"
+    subject_template_name = "tickets_bah/password_reset_subject.txt"
+    form_class = StyledPasswordResetForm
+    success_url = reverse_lazy("password_reset_done")
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except ssl.SSLCertVerificationError:
+            sweetify.warning(
+                self.request,
+                "Erreur de certificat SSL détectée. L'email a été enregistré localement dans 'sent_emails'.",
+                button="Ok",
+                timer=6000,
+            )
+            with override_settings(
+                EMAIL_BACKEND="django.core.mail.backends.filebased.EmailBackend",
+                EMAIL_FILE_PATH=str(settings.EMAIL_FILE_PATH),
+            ):
+                return super().form_valid(form)
+
+
+def verify_email(request, token):
+    try:
+        utilisateur = Utilisateur.objects.get(email_verification_token=token)
+    except Utilisateur.DoesNotExist:
+        sweetify.error(
+            request,
+            "Lien de vérification invalide ou déjà utilisé.",
+            button="Ok",
+            timer=5000,
+        )
+        return redirect("login")
+
+    if utilisateur.is_email_verified:
+        sweetify.info(
+            request,
+            "Votre adresse email est déjà vérifiée. Connectez-vous pour continuer.",
+            button="Ok",
+            timer=4000,
+        )
+        return redirect("login")
+
+    utilisateur.is_email_verified = True
+    utilisateur.email_verification_token = None
+    utilisateur.save(update_fields=["is_email_verified", "email_verification_token"])
+    sweetify.success(
+        request,
+        "Adresse email confirmée ! Vous pouvez maintenant vous connecter.",
+        button="Ok",
+        timer=4000,
+    )
+    return redirect("login")
+
+
+def _get_pending_mfa_user(request):
+    user_id = request.session.get("mfa_user_id")
+    if not user_id:
+        return None
+    try:
+        return Utilisateur.objects.get(id=user_id)
+    except Utilisateur.DoesNotExist:
+        return None
+
+
+def mfa_setup(request):
+    utilisateur = _get_pending_mfa_user(request)
+    if not utilisateur:
+        sweetify.error(
+            request,
+            "Veuillez vous authentifier pour activer la vérification en deux étapes.",
+            button="Ok",
+        )
+        return redirect("login")
+
+    if not utilisateur.totp_secret:
+        utilisateur.totp_secret = pyotp.random_base32()
+        utilisateur.save(update_fields=["totp_secret"])
+
+    totp = pyotp.TOTP(utilisateur.totp_secret)
+    provisioning_uri = totp.provisioning_uri(name=utilisateur.email, issuer_name="Jeux Olympiques")
+    qr_image = qrcode.make(provisioning_uri)
+    buffer = BytesIO()
+    qr_image.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    if request.method == "POST":
+        code = request.POST.get("code", "").strip()
+        if totp.verify(code, valid_window=1):
+            utilisateur.is_totp_enabled = True
+            utilisateur.save(update_fields=["is_totp_enabled"])
+            login(request, utilisateur)
+            redirect_target = request.session.pop("post_login_redirect", "home")
+            request.session.pop("mfa_user_id", None)
+            sweetify.success(
+                request,
+                "Vérification en deux étapes activée avec succès.",
+                button="Ok",
+                timer=4000,
+            )
+            return redirect(redirect_target)
+        sweetify.error(request, "Code invalide. Veuillez réessayer.", button="Ok", timer=4000)
+
+    context = {
+        "qr_code_base64": qr_base64,
+        "secret": utilisateur.totp_secret,
+    }
+    return render(request, "tickets_bah/mfa_setup.html", context)
+
+
+def mfa_verify(request):
+    utilisateur = _get_pending_mfa_user(request)
+    if not utilisateur:
+        sweetify.error(request, "Session expirée. Veuillez vous reconnecter.", button="Ok")
+        return redirect("login")
+
+    if not utilisateur.is_totp_enabled or not utilisateur.totp_secret:
+        return redirect("mfa_setup")
+
+    if request.method == "POST":
+        code = request.POST.get("code", "").strip()
+        totp = pyotp.TOTP(utilisateur.totp_secret)
+        if totp.verify(code, valid_window=1):
+            login(request, utilisateur)
+            redirect_target = request.session.pop("post_login_redirect", "home")
+            request.session.pop("mfa_user_id", None)
+            sweetify.success(request, "Authentification réussie.", button="Ok", timer=3000)
+            return redirect(redirect_target)
+        sweetify.error(request, "Code invalide. Veuillez réessayer.", button="Ok", timer=4000)
+
+    return render(request, "tickets_bah/mfa_verify.html")
+
+
 #3 DECONNEXION
 def logOut(request):
     logout(request)
+    request.session.pop("mfa_user_id", None)
+    request.session.pop("post_login_redirect", None)
     messages.success(request, 'Vous êtes bien déconnectés')
     return HttpResponseRedirect(reverse('login'))
 
