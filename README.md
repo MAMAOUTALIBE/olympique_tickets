@@ -57,6 +57,8 @@ Pour éxècuter le projet en local, assurez vous d'avoir installés les prérequ
         Cette commande renvoie la clé secrète webhook qu'on met dans le point .env qu'on a nommé STRIPE_WEBHOOK_SECRET
         NB : Assurez-vous d'avoir le serveur démarré avant l'éxécution de cette commande
 
+# https://dbdiagram.io/d
 
+   
 
-    
+    dwuwpalcbhziljbw
