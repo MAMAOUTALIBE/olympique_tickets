@@ -1,0 +1,82 @@
+{% extends "appFront/layout.html" %}
+{% load static %}
+
+{% block title %}{{ event.nom }} - Épreuve JO{% endblock %}
+
+{% block content %}
+<section class="sport-detail container-narrow">
+  <div class="sport-detail__header">
+    <a href="{% url 'sports' %}" class="sport-detail__back">
+      <span aria-hidden="true">←</span> Retour aux épreuves
+    </a>
+    <div>
+      <h1>{{ event.nom }}</h1>
+      <ul class="sport-detail__chips">
+        {% if event.discipline %}
+          <li>
+            <span class="chip-label">Discipline</span>
+            <span class="chip-value">{{ event.discipline }}</span>
+          </li>
+        {% endif %}
+        {% if event.lieu %}
+          <li>
+            <span class="chip-label">Lieu</span>
+            <span class="chip-value">{{ event.lieu }}</span>
+          </li>
+        {% endif %}
+        {% if event.date %}
+          <li>
+            <span class="chip-label">Date</span>
+            <span class="chip-value">{{ event.date|date:"d/m/Y H:i" }}</span>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="sport-detail__body">
+    <div class="sport-detail__media">
+      {% if event.image %}
+        <img src="{{ event.image.url }}" alt="{{ event.nom }}">
+      {% else %}
+        <img src="{% static 'admin/assets/img/not-found.svg' %}" alt="{{ event.nom }}">
+      {% endif %}
+    </div>
+    <div class="sport-detail__content">
+      {% if event.description %}
+        <p>{{ event.description|linebreaks }}</p>
+      {% else %}
+        <p>Aucune description détaillée n’est disponible pour cette épreuve pour le moment.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if related_events %}
+    <div class="sport-detail__related">
+      <h2>Autres épreuves à découvrir</h2>
+      <div class="related-grid">
+        {% for related in related_events %}
+          <a class="related-card" href="{% url 'sport_detail' related.pk %}">
+            <div class="related-card__media">
+              {% if related.image %}
+                <img src="{{ related.image.url }}" alt="{{ related.nom }}">
+              {% else %}
+                <img src="{% static 'admin/assets/img/not-found.svg' %}" alt="{{ related.nom }}">
+              {% endif %}
+            </div>
+            <div class="related-card__body">
+              <h3>{{ related.nom }}</h3>
+              {% if related.date %}
+                <p>{{ related.date|date:"d/m/Y H:i" }}</p>
+              {% endif %}
+              {% if related.lieu %}
+                <p class="related-card__place">{{ related.lieu }}</p>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

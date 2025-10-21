@@ -23,28 +23,35 @@
 }
 
 .sport-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 58, 112, 0.12);
     overflow: hidden;
-    transition: transform 0.3s;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    text-decoration: none;
+    color: inherit;
 }
 
+.sport-card:focus-visible,
 .sport-card:hover {
-    transform: scale(1.05);
+    transform: translateY(-6px);
+    box-shadow: 0 18px 38px rgba(0, 58, 112, 0.18);
 }
 
 .sport-card img {
     width: 100%;
-    height: 150px;
+    height: 180px;
     object-fit: cover;
 }
 
 .sport-card h3 {
-    margin: 10px 0;
-    color: #0057b7;
+    margin: 0;
+    color: #003366;
+    font-size: 1.2rem;
 }
-
 .sports-page {
     width: 100%;
     max-width: 1080px;
@@ -101,12 +108,6 @@
     outline: none;
 }
 
-.sport-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
 .sport-card__media {
     background: #f8f9fa;
 }
@@ -123,6 +124,7 @@
     font-size: 0.95rem;
     color: #6c757d;
     font-weight: 600;
+    line-height: 1.4;
 }
 
 .sport-card__date {
@@ -145,11 +147,175 @@
         width: 100%;
     }
 
-    .sports-page__header {
-        text-align: center;
-    }
+.sports-page__header {
+    text-align: center;
+}
 
-    .sports-page__header p {
+.sports-page__header p {
         margin: 0 auto;
+    }
+}
+
+.container-narrow {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 1rem 4rem;
+}
+
+.sport-detail__header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.sport-detail__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #0057b7;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.sport-detail__back:hover {
+    color: #003366;
+}
+
+.sport-detail__header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 0;
+    color: #003366;
+}
+
+.sport-detail__chips {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.sport-detail__chips li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f2ff;
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    color: #003366;
+}
+
+.chip-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+}
+
+.chip-value {
+    font-weight: 600;
+}
+
+.sport-detail__body {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.sport-detail__media img {
+    width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 15px 45px rgba(0, 58, 112, 0.2);
+    object-fit: cover;
+}
+
+.sport-detail__content {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #333;
+}
+
+.sport-detail__content p + p {
+    margin-top: 1rem;
+}
+
+.sport-detail__related {
+    margin-top: 3.5rem;
+}
+
+.sport-detail__related h2 {
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    color: #003366;
+    margin-bottom: 1.8rem;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.related-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 76, 153, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.related-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 76, 153, 0.18);
+}
+
+.related-card__media img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.related-card__body {
+    padding: 0.9rem 1.1rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.related-card__body h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #003366;
+}
+
+.related-card__body p {
+    margin: 0;
+    color: #5c6570;
+    font-size: 0.9rem;
+}
+
+.related-card__place {
+    font-weight: 600;
+    color: #0057b7;
+}
+
+@media (min-width: 960px) {
+    .sport-detail__body {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+        align-items: start;
+    }
+}
+
+@media (max-width: 600px) {
+    .sport-detail__chips {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

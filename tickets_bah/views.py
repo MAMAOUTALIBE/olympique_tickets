@@ -964,3 +964,21 @@ def sports(request):
         "events_count": events.count(),
     }
     return render(request, 'tickets_bah/sports.html', context)
+
+
+def sport_detail(request, pk):
+    event = get_object_or_404(SportEvent, pk=pk)
+
+    related_events = (
+        SportEvent.objects.exclude(pk=event.pk)
+        .filter(discipline__iexact=event.discipline)
+        .order_by("date")[:6]
+        if event.discipline
+        else SportEvent.objects.exclude(pk=event.pk).order_by("-createdAt")[:6]
+    )
+
+    context = {
+        "event": event,
+        "related_events": related_events,
+    }
+    return render(request, "tickets_bah/sport_detail.html", context)

@@ -28,6 +28,8 @@ __pycache__/
 
 # Base de données locale
 *.sqlite3
+*.sqlite
+*.db
 
 # macOS / Windows
 .DS_Store

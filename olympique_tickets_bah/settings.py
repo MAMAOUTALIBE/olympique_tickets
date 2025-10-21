@@ -13,12 +13,14 @@ load_dotenv(BASE_DIR / ".env")  # <- important: charge le .env local
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe")  # ⚠️ mettre une vraie clé en prod via config vars
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv(
         "CSRF_TRUSTED_ORIGINS",
-        "https://*.herokuapp.com,https://localhost,https://127.0.0.1"
+        "https://*.herokuapp.com,https://localhost,https://127.0.0.1,http://localhost,http://127.0.0.1"
     ).split(",")
 ]
 
@@ -66,27 +68,43 @@ TEMPLATES = [
     },
 ]
 
-# --------- Database (Heroku + fallback local) ---------
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL",
-            "postgres://olympique_user:MotDePasse_App14!@127.0.0.1:5432/tickets_olympique_bah"  # fallback dev local
-        ),
-        conn_max_age=600,
-        ssl_require=bool(os.getenv("DYNO")),  # True sur Heroku
-    )
+# --------- Database (PostgreSQL / MariaDB) ---------
+DB_ENGINE = os.getenv("DB_ENGINE", "postgresql").lower()
+
+ENGINE_ALIASES = {
+    "postgres": "django.db.backends.postgresql",
+    "postgresql": "django.db.backends.postgresql",
+    "postgis": "django.contrib.gis.db.backends.postgis",
+    "mariadb": "django.db.backends.mysql",
+    "mysql": "django.db.backends.mysql",
 }
 
-USE_SQLITE_FOR_TESTS = os.getenv("USE_SQLITE_FOR_TESTS", "").lower() in {"1", "true", "yes"} or "test" in sys.argv
+django_engine = ENGINE_ALIASES.get(DB_ENGINE, DB_ENGINE)
 
-if USE_SQLITE_FOR_TESTS:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "test_db.sqlite3",
-        }
+default_port = {
+    "django.db.backends.postgresql": "5432",
+    "django.contrib.gis.db.backends.postgis": "5432",
+    "django.db.backends.mysql": "3306",
+}.get(django_engine, "5432")
+
+DATABASES = {
+    "default": {
+        "ENGINE": django_engine,
+        "NAME": os.getenv("DB_NAME", os.getenv("POSTGRES_DB", "postgres")),
+        "USER": os.getenv("DB_USER", os.getenv("POSTGRES_USER", "postgres")),
+        "PASSWORD": os.getenv("DB_PASSWORD", os.getenv("POSTGRES_PASSWORD", "")),
+        "HOST": os.getenv("DB_HOST", os.getenv("POSTGRES_HOST", "localhost")),
+        "PORT": os.getenv("DB_PORT", os.getenv("POSTGRES_PORT", default_port)),
+        "CONN_MAX_AGE": 600,
     }
+}
+
+if os.getenv("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.config(
+        default=os.getenv("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=bool(os.getenv("DYNO")),
+    )
 
 TEST_RUNNER = "olympique_tickets_bah.test_runner.DefaultAppDiscoverRunner"
 
@@ -94,7 +112,10 @@ TEST_RUNNER = "olympique_tickets_bah.test_runner.DefaultAppDiscoverRunner"
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+if DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

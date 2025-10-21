@@ -1,64 +1,80 @@
-# Plateforme d'achat des tickets des jeux olympiques en ligne
+# Plateforme de billetterie des Jeux Olympiques
 
-## Description
-Ce projet est une application Django permettant aux utilisateurs d'acheter des tickets en ligne et de procéder au paiement sécurisé via Stripe. 
+Application Django permettant la gestion des offres, des réservations et des paiements Stripe pour les Jeux Olympiques. Cette version utilise désormais PostgreSQL (ou MariaDB) au lieu de SQLite et s’appuie sur Docker pour un démarrage rapide.
 
-## Fonctionnalités
-- Système d'achat de tickets en ligne
-- Paiement sécurisé avec Stripe
-- Gestion des Webhooks Stripe pour le suivi des paiements
-- Interface utilisateur intuitive
-- Gestion des offres par l'administrateur du site
-- Génération de code Qr pour chaque ticket acheté
+## Sommaire
+- [Prérequis](#prérequis)
+- [Configuration de l’environnement](#configuration-de-lenvironnement)
+- [Lancement avec Docker](#lancement-avec-docker)
+- [Lancement local (hors Docker)](#lancement-local-hors-docker)
+- [Assets statiques et médias](#assets-statiques-et-médias)
+- [Commandes utiles](#commandes-utiles)
+- [Dépannage](#dépannage)
 
-### Requirements
-Pour éxècuter le projet en local, assurez vous d'avoir installés les prérequis :
-    - Installer Python : https://www.python.org/
-    - Installer un gestionnaire de paquets comme PIP : https://pypi.org/project/pip/
-    - Installer Django : py -m pip install Django pour Windows ou python -m pip install Django pour Linux
-    - Versions des outils utilisés sur le projet : Python 3.10.12, Pip 22.0.2, Django 5.0.7
+## Prérequis
+- Python 3.10 ou supérieur (pour l’exécution hors Docker)
+- Docker et Docker Compose (recommandés)
+- Stripe CLI (facultatif pour simuler les webhooks)
 
-### Installation PostgreSQl
-    - Installation PostgreSQL pour Django : pip install psycopg2 ou utiliser la version binaire : pip install psycopg2-binary
+## Configuration de l’environnement
+1. Copier le fichier d’exemple :
+   ```bash
+   cp .env.example .env
+   ```
+2. Renseigner les variables obligatoires dans `.env` :
+   - `SECRET_KEY` : clé Django sécurisée pour la prod
+   - `DB_ENGINE` : `postgresql` (par défaut) ou `mariadb`
+   - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
+   - Clés Stripe (`STRIPE_SECRET_KEY`, `STRIPE_SECRET_KEY_TEST`, `STRIPE_PUBLIC_KEY_TEST`, `STRIPE_WEBHOOK_SECRET`)
+3. Ajouter si besoin `ALLOWED_HOSTS` et `CSRF_TRUSTED_ORIGINS` pour les domaines publics.
 
-### Lancement du projet
-1. Clonez le projet depuis le dépôt github vers votre machine en local
-2. Installer les dépendances avec pip install -r  requirements.txt
-3. Copiez le fichier .env.example pour créer le fichier d'environnement .env
-4. Démarrer le serveur de développement de Django
-    - python3 manage.py runserver, cette commande lancera le serveur de développement 
-    sur l'adresse http://localhost::8000
-    - accéder au lien qui vous menèra sur lapage d'acueil du projet
+## Lancement avec Docker
+```bash
+docker-compose up --build
+```
+- Le service `postgres` démarre avec un volume persistant.
+- Le service `web` attend la disponibilité de la base, exécute les migrations et `collectstatic`, puis lance `python manage.py runserver 0.0.0.0:8000`.
+- Accéder à l’application sur [http://localhost:8000](http://localhost:8000).
 
-### 1. **Commandes à èxécuter**
-- pip install -r  requirements.txt
-- pip install stripe
+### Exécuter les migrations manuellement
+```bash
+docker-compose run --rm web python manage.py migrate
+```
 
-### 2. **Stripe Webhook**
-- Installez stripe : pip install stripe
-- Dans le .env mettez les clés  ==> STRIPE_SECRET_KEY_TEST, STRIPE_PUBLIC_KEY_TEST
-- Créez un compte Stripe et activez le webhook
-- Configurez le webhook pour envoyer les données de paiement vers votre application
-- Dans votre application, configurez le webhook pour recevoir les données de paiement
-- Tester avec Sripe CLI
-    Pour installer la CLI Stripe sous Linux sans gestionnaire de paquets :
+### Collecter les fichiers statiques
+```bash
+docker-compose run --rm web python manage.py collectstatic --noinput
+```
 
-        Téléchargez le dernier fichier tar.gz linux depuis [GitHub](https://github.com/stripe/stripe-cli/releases/tag/v1.26.1).
-        Décompressez le fichier : tar -xvf stripe_X.X.X_linux_x86_64.tar.gz.
-        Déplacez ./stripe sur votre chemin d’exécution.
-        (Documentation)[https://docs.stripe.com/stripe-cli]
+## Lancement local (hors Docker)
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+Assurez-vous que PostgreSQL ou MariaDB est accessible et que les variables `DB_*` correspondent.
 
-    Se connecter à l'interface de ligne de commande
+## Assets statiques et médias
+- Les fichiers statiques sont servis par Django/Whitenoise. Pensez à lancer `collectstatic` en prod ou lors du build Docker.
+- Les images présentes dans `static/admin/assets/img` et `static/tickets` sont accessibles via la balise `{% static %}` et ne doivent plus générer de 404.
+- En développement, les fichiers médias (`MEDIA_URL`) sont servis par Django ; en production, envisagez un CDN ou un bucket S3/GCS.
 
-        Èxécuter dans voter invite de commande stripe login
-        Appuyez sur la touche Entrée de votre clavier pour effectuer le processus d’authentification dans votre navigateur.
+## Commandes utiles
+Le projet inclut un `Makefile` :
 
-    stripe listen --forward-to localhost:8000/webhook/stripe/ 
-        Cette commande renvoie la clé secrète webhook qu'on met dans le point .env qu'on a nommé STRIPE_WEBHOOK_SECRET
-        NB : Assurez-vous d'avoir le serveur démarré avant l'éxécution de cette commande
+| Commande | Description |
+|----------|-------------|
+| `make up` | Démarre l’environnement Docker (équivalent à `docker-compose up --build`) |
+| `make down` | Stoppe les services Docker |
+| `make migrate` | Applique les migrations via le conteneur web |
+| `make collectstatic` | Lance `collectstatic` dans le conteneur |
 
-# https://dbdiagram.io/d
+## Dépannage
+- **La base ne répond pas** : vérifiez `docker-compose logs postgres` et que les variables `DB_*` sont cohérentes.
+- **Erreur sur les fichiers statiques** : assurez-vous d’avoir exécuté `collectstatic` et que le volume `staticfiles/` est monté si nécessaire.
+- **Webhooks Stripe** : utilisez `stripe listen --forward-to localhost:8000/webhook/stripe/` et mettez à jour `STRIPE_WEBHOOK_SECRET`.
+- **Permissions superuser** : créez un compte avec `python manage.py createsuperuser` (ou via `docker-compose run --rm web python manage.py createsuperuser`).
 
-   
-
-   
+Pour toute autre question, consultez la documentation Django ou ouvrez une issue sur le dépôt du projet.

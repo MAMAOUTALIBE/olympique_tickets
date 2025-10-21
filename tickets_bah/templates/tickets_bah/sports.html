@@ -33,8 +33,9 @@
     data-empty-message="Aucune épreuve ne correspond à votre recherche."
   >
     {% for event in events %}
-      <article
+      <a
         class="sport-card"
+        href="{% url 'sport_detail' event.pk %}"
         data-keywords="{{ event.nom|default_if_none:''|lower }} {{ event.discipline|default_if_none:''|lower }} {{ event.lieu|default_if_none:''|lower }}"
       >
         <div class="sport-card__media">
@@ -58,7 +59,7 @@
             <p class="sport-card__date">{{ event.date|date:"d/m/Y H:i" }}</p>
           {% endif %}
         </div>
-      </article>
+      </a>
     {% empty %}
       <p class="sports-empty-message">Aucune épreuve ne correspond à votre recherche.</p>
     {% endfor %}
