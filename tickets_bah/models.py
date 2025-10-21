@@ -64,12 +64,35 @@ class Offre(models.Model):
     nom = models.CharField(max_length=100)
     description = models.TextField()
     prix = models.IntegerField()
-    nombre_de_places = models.CharField(max_length=100)
+    nombre_de_places = models.PositiveIntegerField()
+    places_restantes = models.PositiveIntegerField(default=0)
     createdAt = models.DateTimeField(auto_now_add=True, null=True)
     updatedAt = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return self.nom
+
+    def save(self, *args, **kwargs):
+        if self.places_restantes is None:
+            self.places_restantes = 0
+        if self._state.adding and self.places_restantes == 0:
+            self.places_restantes = self.nombre_de_places
+        self.places_restantes = max(0, min(self.places_restantes, self.nombre_de_places))
+        super().save(*args, **kwargs)
+
+    def reserver_places(self, quantity: int):
+        if quantity <= 0:
+            raise ValueError("La quantité à réserver doit être positive.")
+        if self.places_restantes < quantity:
+            raise ValueError("Nombre de places disponibles insuffisant.")
+        self.places_restantes -= quantity
+        self.save(update_fields=["places_restantes", "updatedAt"])
+
+    def liberer_places(self, quantity: int):
+        if quantity <= 0:
+            return
+        self.places_restantes = min(self.places_restantes + quantity, self.nombre_de_places)
+        self.save(update_fields=["places_restantes", "updatedAt"])
 
 #Model Rservation
 class Reservation(models.Model):
@@ -139,6 +162,43 @@ class UtilisateurPayment(models.Model):
 
     def __str__(self):
         return f"{self.utilisateur.nom} {self.utilisateur.prenom} - {self.offre.nom} - Paid: {self.has_paid}"
+
+
+class StripeCheckoutSession(models.Model):
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name="checkout_sessions")
+    offre = models.ForeignKey(Offre, on_delete=models.CASCADE, related_name="checkout_sessions")
+    stripe_session_id = models.CharField(max_length=255, unique=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True)
+    quantity = models.PositiveIntegerField(default=1)
+    is_completed = models.BooleanField(default=False)
+    hold_expires_at = models.DateTimeField(blank=True, null=True)
+    reservation = models.OneToOneField(
+        "Reservation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="checkout_session",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["stripe_session_id"], name="tickets_bah_stripe_session_idx"),
+            models.Index(fields=["utilisateur", "offre", "is_completed"], name="tickets_bah_session_status_idx"),
+            models.Index(fields=["offre", "is_completed", "hold_expires_at"], name="tickets_bah_session_hold_idx"),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        status = "completed" if self.is_completed else "pending"
+        return f"{self.stripe_session_id} ({status})"
+
+    @property
+    def hold_active(self):
+        if self.is_completed or not self.hold_expires_at:
+            return False
+        return self.hold_expires_at > timezone.now()
 
 
 class SportEvent(models.Model):

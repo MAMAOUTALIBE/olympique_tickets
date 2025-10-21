@@ -63,8 +63,11 @@ class ReservationModelTests(TestCase):
             nom="Billet Solo",
             description="Accès pour une personne",
             prix=100,
-            nombre_de_places="10",
+            nombre_de_places=10,
         )
+
+    def test_offre_places_restantes_initialisee(self):
+        self.assertEqual(self.offre.places_restantes, self.offre.nombre_de_places)
 
     def test_reservation_str(self):
         reservation = Reservation.objects.create(

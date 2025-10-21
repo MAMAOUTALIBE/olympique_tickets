@@ -27,6 +27,10 @@
                                 class="text-danger">*</i></b></label>
                     <input type="number" class="form-control" name="nombre_de_places" id="nombre_de_places" value="{{ offre.nombre_de_places }}">
                 </div>
+                <div class="col-4">
+                    <label for="places_restantes" class="form-label"><b>Places restantes</b></label>
+                    <input type="number" class="form-control" id="places_restantes" value="{{ offre.places_restantes }}" disabled>
+                </div>
                 <div class="col-12">
                     <label for="description" class="form-label"><b>Description</b></label>
                     <textarea cols="5" rows="5" class="form-control" name="description" id="description">{{ offre.description }}</textarea>

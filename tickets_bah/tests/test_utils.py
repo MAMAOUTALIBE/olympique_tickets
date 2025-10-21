@@ -20,7 +20,7 @@ class EnvoyerConfirmationReservationTests(TestCase):
             nom="Billet Duo",
             description="Accès pour deux personnes",
             prix=200,
-            nombre_de_places="5",
+            nombre_de_places=5,
         )
         self.reservation = Reservation.objects.create(
             utilisateur=self.utilisateur,

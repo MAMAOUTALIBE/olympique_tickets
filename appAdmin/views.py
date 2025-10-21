@@ -9,7 +9,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from appAdmin.forms import OffresForm, SportEventForm
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from tickets_bah.constance import user_role
 
@@ -59,7 +58,7 @@ def offres(request):
     }
     return render(request=request, template_name="admin/offres/index.html", context=context)
 
-
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def createOffres(request):
     context = {
         "form": OffresForm(),
@@ -69,7 +68,7 @@ def createOffres(request):
     }
     return render(request=request, template_name="admin/offres/create.html", context=context)
 
-@login_required
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def storeOffres(request):
     if request.method == "POST":
         form = OffresForm(request.POST)
@@ -79,12 +78,12 @@ def storeOffres(request):
             prix = form.cleaned_data.get('prix')
             nombre_de_places = form.cleaned_data.get('nombre_de_places')
             offres = Offre.objects.create(
-                nom = nom,
-                description = description,
-                prix = prix,
-                nombre_de_places = nombre_de_places,
+                nom=nom,
+                description=description,
+                prix=prix,
+                nombre_de_places=nombre_de_places,
+                places_restantes=nombre_de_places,
             )
-            offres.save()
             sweetify.success(request, "Offre enregistrée avec succès !", button='Fermer', timer=3000)
             return redirect("offres.index")
         else:
@@ -93,33 +92,40 @@ def storeOffres(request):
             return redirect("offres.create")
     return HttpResponseRedirect(reverse('offres.create'))
 
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def editOffres(request, id):
-    if request.user.is_authenticated:
-        offre = Offre.objects.get(id=id)
-        template = loader.get_template('admin/offres/edit.html')
-        context = {
-            "offre": offre,
-            "title": 'Modification Offre',
-            "subTitle": 'Modification Offre',
-        }
-        return HttpResponse(template.render(context, request))
-    else:
-        return HttpResponseRedirect(reverse('login'))
-    
-@login_required
+    offre = Offre.objects.get(id=id)
+    template = loader.get_template('admin/offres/edit.html')
+    context = {
+        "offre": offre,
+        "title": 'Modification Offre',
+        "subTitle": 'Modification Offre',
+    }
+    return HttpResponse(template.render(context, request))
+
+
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def updateOffres(request, id):
     offre = Offre.objects.get(id=id)
     if request.method == "POST":
-        nom = request.POST['nom']
-        description = request.POST['description']
-        prix = request.POST['prix']
-        nombre_de_places = request.POST['nombre_de_places']
         form = OffresForm(request.POST, instance=offre)
         if form.is_valid():
-            offre.nom = nom
-            offre.description = description
-            offre.prix = prix
-            offre.nombre_de_places = nombre_de_places
+            data = form.cleaned_data
+            old_total = offre.nombre_de_places
+            old_restantes = offre.places_restantes
+
+            offre.nom = data.get('nom')
+            offre.description = data.get('description')
+            offre.prix = data.get('prix')
+            new_total = data.get('nombre_de_places')
+            offre.nombre_de_places = new_total
+
+            delta = new_total - old_total
+            updated_restantes = old_restantes + delta
+            if delta < 0 and updated_restantes < 0:
+                updated_restantes = 0
+            offre.places_restantes = min(updated_restantes, new_total)
+
             offre.save()
             sweetify.success(request, "Offre mise à jour avec succès !", button='Fermer', timer=3000)
             return redirect("offres.index")
@@ -130,6 +136,7 @@ def updateOffres(request, id):
 
     return HttpResponseRedirect(reverse('offres.index'))
 
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def deleteOffres(request, id):
     try:
         offre = Offre.objects.get(id=id)
@@ -160,6 +167,8 @@ def reservations(request):
     }
     return render(request=request, template_name="admin/reservations/index.html", context=context)
 
+
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def deleteReservations(request, id):
     try:
         reservation = Reservation.objects.get(id=id)
@@ -188,6 +197,8 @@ def paniers(request):
     }
     return render(request=request, template_name="admin/paniers/index.html", context=context)
 
+
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def deletePaniers(request, id):
     try:
         panier = Panier.objects.get(id=id)
@@ -216,6 +227,8 @@ def utilisateurs(request):
     }
     return render(request=request, template_name="admin/utilisateurs/index.html", context=context)
 
+
+@user_passes_test(admin_is_authenticate, login_url="/login")
 def deleteUtilisateurs(request, id):
     try:
         utilisateur = Utilisateur.objects.get(id=id)

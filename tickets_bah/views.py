@@ -4,6 +4,7 @@ import logging
 import os
 import ssl
 import uuid
+from datetime import timedelta
 from io import BytesIO
 from math import frexp
 
@@ -20,9 +21,11 @@ from django.contrib.auth.views import PasswordResetView
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.staticfiles import finders
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Q, Sum
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -34,7 +37,8 @@ from xhtml2pdf import pisa
 
 from .forms import LoginForm, RegisterForm, StyledPasswordResetForm
 from .models import (LoginVerificationToken, Offre, Panier, Reservation,
-                     SportEvent, Utilisateur, UtilisateurPayment)
+                     SportEvent, Utilisateur, UtilisateurPayment,
+                     StripeCheckoutSession)
 from .utils import envoyer_confirmation_reservation
 from tickets_bah.core.permissions import (is_admin, is_super_admin,
                                           user_is_authenticate)
@@ -43,6 +47,9 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES = getattr(
     settings, "LOGIN_EMAIL_TOKEN_EXPIRATION_MINUTES", 10
 )
+HOLD_MINUTES = max(1, int(getattr(settings, "RESERVATION_HOLD_MINUTES", 10)))
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.(vue pour la page d'acceuil)
@@ -445,105 +452,399 @@ def panier(request):
 
 
 
-#Intégration de stripe pour les réservations de tickets
-def create_checkout_session(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        utilisateur_id = data.get("utilisateur_id")
-        offre_id = data.get("offre_id")
-
-        try:
-            utilisateur = get_object_or_404(Utilisateur, id=utilisateur_id)
-            offre = get_object_or_404(Offre, id=offre_id)
-
-            # Créer un client Stripe s'il n'existe pas
-            if not utilisateur.stripe_customer_id:
-                customer = stripe.Customer.create(
-                    email=utilisateur.email,
-                    name=f"{utilisateur.nom} {utilisateur.prenom}"
-                )
-                utilisateur.stripe_customer_id = customer.id
-                utilisateur.save()
-                
-            # Créer une session Stripe Checkout
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=["card"],
-                line_items=[
-                    {
-                        "price_data": {
-                            "currency": "eur",
-                            "product_data": {
-                                "name": "Offre - Jeux Olympiques",
-                            },
-                            "unit_amount": int(offre.prix * 100),  # Convertir en centimes
-                        },
-                        "quantity": 1,
-                    },
-                ],
-                mode="payment",
-                success_url=request.build_absolute_uri(f"/reservation/success?utilisateur_id={utilisateur_id}&offre_id={offre_id}"),
-                cancel_url=request.build_absolute_uri("/reservation/cancel"),
-            )
-            return JsonResponse({"id": checkout_session.id})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-        
+def _generate_ticket_key():
+    """Génère une clé de billet courte unique."""
+    for _ in range(5):
+        candidate = uuid.uuid4().hex[:12]
+        if not Reservation.objects.filter(cle_billet=candidate).exists():
+            return candidate
+    return uuid.uuid4().hex
 
 
-def reservation_success(request):
-    """Crée la réservation après paiement réussi et enregistre les infos de paiement"""
-    utilisateur_id = request.GET.get("utilisateur_id")
-    offre_id = request.GET.get("offre_id")
+def _hold_cache_key(session_id: str) -> str:
+    return f"ticket_hold:{session_id}"
 
-    if utilisateur_id and offre_id:
-        utilisateur = get_object_or_404(Utilisateur, id=utilisateur_id)
-        offre = get_object_or_404(Offre, id=offre_id)
 
-        # Récupérer le dernier paiement du client sur Stripe
-        try:
-            charges = stripe.Charge.list(customer=utilisateur.stripe_customer_id, limit=1)
-            if charges and charges.data:
-                charge = charges.data[0]  # Dernière transaction
-                payment_method = stripe.PaymentMethod.retrieve(charge.payment_method)
+def _cleanup_expired_holds(offre: Offre, now=None):
+    reference_time = now or timezone.now()
+    expired_qs = StripeCheckoutSession.objects.filter(
+        offre=offre,
+        is_completed=False,
+        hold_expires_at__isnull=False,
+        hold_expires_at__lte=reference_time,
+    )
+    expired_ids = list(expired_qs.values_list("stripe_session_id", flat=True))
+    deleted, _ = expired_qs.delete()
+    if deleted:
+        for session_id in expired_ids:
+            cache.delete(_hold_cache_key(session_id))
 
-                # Enregistrer le paiement dans la base de données
-                UtilisateurPayment.objects.create(
-                    utilisateur=utilisateur,
-                    offre=offre,
-                    price=charge.amount,  # Montant payé
-                    currency=charge.currency.upper(),
-                    has_paid=True,
-                    stripe_customer_id=utilisateur.stripe_customer_id,
-                    stripe_payment_method_id=payment_method.id,
-                    last4=payment_method.card.last4,
-                    expiry_date=f"{payment_method.card.exp_month}/{payment_method.card.exp_year}"
-                )
-        except Exception as e:
-            print(f"Erreur lors de la récupération du paiement Stripe : {e}")
 
-        # Générer et enregistrer la réservation
-        cle_billet = str(uuid.uuid4())[:12]
+def _active_hold_quantity(offre: Offre, now=None) -> int:
+    reference_time = now or timezone.now()
+    total = (
+        StripeCheckoutSession.objects.filter(
+            offre=offre,
+            is_completed=False,
+            hold_expires_at__gt=reference_time,
+        ).aggregate(total=Sum("quantity"))["total"]
+        or 0
+    )
+    return int(total)
+
+
+def _upsert_hold_cache(session_id: str, quantity: int, expires_at):
+    ttl_seconds = max(60, HOLD_MINUTES * 60)
+    cache.set(
+        _hold_cache_key(session_id),
+        {"quantity": quantity, "expires_at": expires_at.isoformat()},
+        ttl_seconds,
+    )
+
+
+def _finalize_checkout_session(stripe_session):
+    """
+    Idempotent handler used by le webhook Stripe et la redirection success.
+    Crée la réservation et marque la session comme complétée.
+    """
+    session_id = stripe_session.get("id")
+    metadata = stripe_session.get("metadata") or {}
+    utilisateur_id = metadata.get("utilisateur_id") or stripe_session.get("client_reference_id")
+    offre_id = metadata.get("offre_id")
+    raw_quantity = metadata.get("quantity", "1")
+
+    if not session_id or not utilisateur_id or not offre_id:
+        raise ValueError("Checkout session metadata manquante.")
+
+    try:
+        utilisateur_id = int(utilisateur_id)
+        offre_id = int(offre_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Métadonnées Stripe invalides.") from exc
+
+    try:
+        quantity_from_metadata = int(raw_quantity)
+    except (TypeError, ValueError):
+        quantity_from_metadata = 1
+    quantity_from_metadata = max(1, quantity_from_metadata)
+
+    with transaction.atomic():
+        checkout_session, _ = StripeCheckoutSession.objects.select_for_update().get_or_create(
+            stripe_session_id=session_id,
+            defaults={
+                "utilisateur_id": utilisateur_id,
+                "offre_id": offre_id,
+                "quantity": quantity_from_metadata,
+            },
+        )
+
+        if checkout_session.utilisateur_id != utilisateur_id or checkout_session.offre_id != offre_id:
+            raise ValueError("Session Stripe associée à un autre utilisateur ou une autre offre.")
+
+        if checkout_session.is_completed and checkout_session.reservation_id:
+            return checkout_session.reservation
+
+        utilisateur = checkout_session.utilisateur
+        offre = Offre.objects.select_for_update().get(id=offre_id)
+
+        now = timezone.now()
+        _cleanup_expired_holds(offre, now=now)
+
+        quantity = max(1, checkout_session.quantity or quantity_from_metadata)
+        if offre.places_restantes < quantity:
+            raise ValueError("Plus de places disponibles pour finaliser cette réservation.")
+
+        payment_intent_id = stripe_session.get("payment_intent")
+        amount_total = stripe_session.get("amount_total") or int(offre.prix * quantity * 100)
+        currency = (stripe_session.get("currency") or "eur").upper()
+
+        payment_method_id = None
+        last4 = None
+        expiry_date = None
+
+        if payment_intent_id:
+            try:
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+                payment_method_id = payment_intent.payment_method
+                customer_id = payment_intent.customer
+                if customer_id and not utilisateur.stripe_customer_id:
+                    utilisateur.stripe_customer_id = customer_id
+                    utilisateur.save(update_fields=["stripe_customer_id"])
+
+                if payment_intent.charges and payment_intent.charges.data:
+                    charge = payment_intent.charges.data[0]
+                    card_info = charge.payment_method_details.get("card") if charge.payment_method_details else None
+                    if card_info:
+                        last4 = card_info.get("last4")
+                        exp_month = card_info.get("exp_month")
+                        exp_year = card_info.get("exp_year")
+                        if exp_month and exp_year:
+                            expiry_date = f"{exp_month}/{exp_year}"
+            except Exception as exc:
+                logger.warning("Impossible de récupérer les détails de paiement Stripe %s: %s", payment_intent_id, exc)
+
+        offre.reserver_places(quantity)
+
         reservation = Reservation.objects.create(
             utilisateur=utilisateur,
             offre=offre,
-            cle_billet=cle_billet
+            cle_billet=_generate_ticket_key(),
         )
-
         reservation.generate_qr_code()
         reservation.save()
 
+        UtilisateurPayment.objects.create(
+            utilisateur=utilisateur,
+            offre=offre,
+            quantity=quantity,
+            price=amount_total,
+            currency=currency,
+            has_paid=True,
+            stripe_customer_id=utilisateur.stripe_customer_id,
+            stripe_payment_method_id=payment_method_id,
+            last4=last4,
+            expiry_date=expiry_date,
+        )
 
-        # Stocker l'ID de la réservation dans la session
-        request.session['reservation_id'] = reservation.id
+        checkout_session.quantity = quantity
+        checkout_session.is_completed = True
+        checkout_session.reservation = reservation
+        checkout_session.stripe_payment_intent_id = payment_intent_id
+        checkout_session.hold_expires_at = now
+        checkout_session.save(
+            update_fields=[
+                "quantity",
+                "is_completed",
+                "reservation",
+                "stripe_payment_intent_id",
+                "hold_expires_at",
+                "updated_at",
+            ]
+        )
 
-        # Envoyer un email de confirmation
-        envoyer_confirmation_reservation(utilisateur, reservation)
+    cache.delete(_hold_cache_key(session_id))
+    envoyer_confirmation_reservation(utilisateur, reservation)
+
+    return reservation
 
 
-        # Rediriger vers la page du billet
+# Intégration de Stripe pour les réservations de tickets
+@user_passes_test(user_is_authenticate, login_url="/login")
+def create_checkout_session(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Méthode non autorisée."}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Corps de requête invalide."}, status=400)
+
+    utilisateur = request.user
+    utilisateur_id = data.get("utilisateur_id") or utilisateur.id
+    offre_id = data.get("offre_id")
+    quantity_raw = data.get("quantity", 1)
+
+    try:
+        utilisateur_id = int(utilisateur_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Paramètres utilisateur ou quantité invalides."}, status=400)
+
+    try:
+        quantity = int(quantity_raw)
+    except (TypeError, ValueError):
+        quantity = 1
+    quantity = max(1, quantity)
+
+    if utilisateur_id != utilisateur.id:
+        return JsonResponse({"error": "Utilisateur non autorisé."}, status=403)
+
+    if not offre_id:
+        return JsonResponse({"error": "Offre manquante."}, status=400)
+
+    offre = get_object_or_404(Offre, id=offre_id)
+
+    try:
+        if not utilisateur.stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=utilisateur.email,
+                name=f"{utilisateur.nom} {utilisateur.prenom}",
+            )
+            utilisateur.stripe_customer_id = customer.id
+            utilisateur.save(update_fields=["stripe_customer_id"])
+    except stripe.error.StripeError as exc:
+        logger.exception("Erreur lors de la création du client Stripe pour %s: %s", utilisateur.email, exc)
+        return JsonResponse({"error": "Création du client de paiement impossible."}, status=502)
+
+    metadata = {
+        "utilisateur_id": str(utilisateur.id),
+        "offre_id": str(offre.id),
+        "quantity": str(quantity),
+    }
+
+    idempotency_key = f"checkout_{utilisateur.id}_{offre.id}_{uuid.uuid4().hex}"
+    placeholder_session_id = f"pending-{uuid.uuid4().hex}"
+    now = timezone.now()
+    hold_expires_at = now + timedelta(minutes=HOLD_MINUTES)
+
+    with transaction.atomic():
+        offre_locked = Offre.objects.select_for_update().get(id=offre.id)
+        _cleanup_expired_holds(offre_locked, now=now)
+        active_hold_qty = _active_hold_quantity(offre_locked, now=now)
+        available = offre_locked.places_restantes - active_hold_qty
+        if available < quantity:
+            return JsonResponse(
+                {"error": "Plus de places disponibles pour cette offre.", "remaining": max(0, available)},
+                status=409,
+            )
+
+        StripeCheckoutSession.objects.filter(
+            utilisateur=utilisateur,
+            offre=offre_locked,
+            is_completed=False,
+        ).delete()
+
+        placeholder = StripeCheckoutSession.objects.create(
+            utilisateur=utilisateur,
+            offre=offre_locked,
+            stripe_session_id=placeholder_session_id,
+            quantity=quantity,
+            hold_expires_at=hold_expires_at,
+        )
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "eur",
+                        "product_data": {
+                            "name": offre.nom,
+                        },
+                        "unit_amount": int(offre.prix * 100),
+                    },
+                    "quantity": quantity,
+                },
+            ],
+            mode="payment",
+            customer=utilisateur.stripe_customer_id,
+            client_reference_id=str(utilisateur.id),
+            success_url=request.build_absolute_uri(
+                reverse("reservation_success")
+            ) + "?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url=request.build_absolute_uri(reverse("panier")),
+            metadata=metadata,
+            idempotency_key=idempotency_key,
+        )
+    except stripe.error.StripeError as exc:
+        logger.exception("Création de la session Checkout Stripe échouée: %s", exc)
+        with transaction.atomic():
+            StripeCheckoutSession.objects.filter(pk=placeholder.pk).delete()
+        return JsonResponse({"error": "Impossible de démarrer le paiement."}, status=502)
+
+    update_time = timezone.now()
+    new_expiration = update_time + timedelta(minutes=HOLD_MINUTES)
+
+    with transaction.atomic():
+        placeholder_locked = StripeCheckoutSession.objects.select_for_update().get(pk=placeholder.pk)
+        offre_locked = Offre.objects.select_for_update().get(id=offre.id)
+        _cleanup_expired_holds(offre_locked, now=update_time)
+
+        active_hold_qty = _active_hold_quantity(offre_locked, now=update_time)
+        if placeholder_locked.hold_active:
+            active_hold_qty -= placeholder_locked.quantity
+
+        available = offre_locked.places_restantes - active_hold_qty
+        if available < placeholder_locked.quantity:
+            placeholder_locked.delete()
+            cache.delete(_hold_cache_key(placeholder_session_id))
+            return JsonResponse(
+                {"error": "Plus de places disponibles pour cette offre.", "remaining": max(0, available)},
+                status=409,
+            )
+
+        placeholder_locked.stripe_session_id = checkout_session.id
+        placeholder_locked.hold_expires_at = new_expiration
+        placeholder_locked.save(update_fields=["stripe_session_id", "hold_expires_at", "updated_at"])
+
+    _upsert_hold_cache(checkout_session.id, quantity, new_expiration)
+
+    return JsonResponse({"id": checkout_session.id})
+
+
+@user_passes_test(user_is_authenticate, login_url="/login")
+def reservation_success(request):
+    """Affiche l'état du paiement Stripe et redirige vers le billet une fois confirmé."""
+    session_id = request.GET.get("session_id")
+    if not session_id:
+        sweetify.error(request, "Session de paiement manquante.", button="Ok", timer=4000)
+        return redirect("panier")
+
+    try:
+        checkout_session = StripeCheckoutSession.objects.select_related("reservation", "utilisateur").get(
+            stripe_session_id=session_id
+        )
+    except StripeCheckoutSession.DoesNotExist:
+        checkout_session = None
+
+    if checkout_session and checkout_session.utilisateur_id != request.user.id:
+        sweetify.error(request, "Cette session de paiement ne vous appartient pas.", button="Ok", timer=4000)
+        return redirect("panier")
+
+    if checkout_session and checkout_session.is_completed and checkout_session.reservation:
+        request.session["reservation_id"] = checkout_session.reservation_id
+        sweetify.success(request, "Paiement confirmé !", button="Ok", timer=3000)
         return redirect("e_billet")
 
-    return redirect("/")
+    try:
+        stripe_session = stripe.checkout.Session.retrieve(session_id)
+    except Exception as exc:
+        logger.warning("Impossible de récupérer la session Stripe %s: %s", session_id, exc)
+        sweetify.info(
+            request,
+            "Votre paiement est en cours de validation. Réessayez dans quelques secondes.",
+            button="Ok",
+            timer=6000,
+        )
+        return render(
+            request,
+            "tickets_bah/reservation_pending.html",
+            {"session_id": session_id},
+        )
+
+    metadata = stripe_session.get("metadata") or {}
+    if str(metadata.get("utilisateur_id")) != str(request.user.id):
+        sweetify.error(request, "Session de paiement invalide.", button="Ok", timer=5000)
+        return redirect("panier")
+
+    if stripe_session.get("payment_status") == "paid":
+        try:
+            reservation = _finalize_checkout_session(stripe_session)
+        except Exception as exc:
+            logger.exception("Erreur lors de la finalisation de la session %s: %s", session_id, exc)
+            sweetify.error(
+                request,
+                "Une erreur est survenue lors de la finalisation du paiement. Contactez le support.",
+                button="Ok",
+                timer=6000,
+            )
+            return redirect("panier")
+
+        request.session["reservation_id"] = reservation.id
+        sweetify.success(request, "Paiement confirmé !", button="Ok", timer=3000)
+        return redirect("e_billet")
+
+    sweetify.info(
+        request,
+        "Votre paiement est en cours de validation.",
+        button="Ok",
+        timer=6000,
+    )
+    return render(
+        request,
+        "tickets_bah/reservation_pending.html",
+        {"session_id": session_id},
+    )
 
  
 
@@ -565,22 +866,44 @@ def e_billet(request):
 @csrf_exempt
 def stripe_webhook(request):
     payload = request.body
-    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+    if not sig_header:
+        logger.warning("Requête webhook Stripe sans signature.")
+        return HttpResponse(status=400)
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError:
-        # Invalid payload
+        logger.warning("Payload Stripe invalide.")
         return HttpResponse(status=400)
     
     except stripe.error.SignatureVerificationError:
-        # Invalid signature
+        logger.warning("Signature Stripe invalide.")
         return HttpResponse(status=400)
     
-    if event['type'] == 'checkout.session.completed':
-        print(event)
-        print('Paiement réussi...')
+    event_type = event.get('type')
+
+    if event_type in {'checkout.session.completed', 'checkout.session.async_payment_succeeded'}:
+        stripe_session = event['data']['object']
+        try:
+            reservation = _finalize_checkout_session(stripe_session)
+            logger.info(
+                "Session Stripe %s finalisée pour l'utilisateur %s",
+                stripe_session.get("id"),
+                reservation.utilisateur_id,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Erreur lors du traitement du webhook Stripe pour la session %s: %s",
+                stripe_session.get("id"),
+                exc,
+            )
+            return HttpResponse(status=500)
+    elif event_type == 'checkout.session.async_payment_failed':
+        stripe_session = event['data']['object']
+        logger.warning("Paiement Stripe échoué pour la session %s", stripe_session.get("id"))
 
     return HttpResponse(status=200)
 

@@ -26,6 +26,7 @@
                             <th scope="col" class="text-center">Description</th>
                             <th scope="col" class="text-center">Prix</th>
                             <th scope="col" class="text-center">Nombre de places</th>
+                            <th scope="col" class="text-center">Places restantes</th>
                             <th scope="col" class="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -37,6 +38,7 @@
                             <td class="text-center">{{ item.description }}</td>
                             <td class="text-center">{{ item.prix }}</td>
                             <td class="text-center">{{ item.nombre_de_places }}</td>
+                            <td class="text-center">{{ item.places_restantes }}</td>
                             <td class="text-center">
                                 <a href="{% url 'offres.edit' item.id %}" class="btn btn-sm btn-warning"><i
                                         class="bi bi-pencil-square"></i></a>

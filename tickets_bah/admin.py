@@ -10,7 +10,7 @@ class UtilisateurAdmin(admin.ModelAdmin):
     list_filter = ('nom', 'prenom')  # Filtres disponibles dans la liste
 
 class OffreAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'prix', 'nombre_de_places')
+    list_display = ('nom', 'prix', 'nombre_de_places', 'places_restantes')
     search_fields = ('nom',)
 
 class ReservationAdmin(admin.ModelAdmin):
@@ -25,5 +25,4 @@ admin.site.register(Reservation, ReservationAdmin)
 
 admin.site.register(UtilisateurPayment)
 admin.site.register(SportEvent)
-
 
